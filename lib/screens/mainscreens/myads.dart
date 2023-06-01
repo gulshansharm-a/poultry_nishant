@@ -1,10 +1,33 @@
 import 'package:flutter/material.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 import 'package:poultry_app/utils/constants.dart';
 import 'package:poultry_app/widgets/custombutton.dart';
 import 'package:poultry_app/widgets/generalappbar.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class MyAdsPage extends StatefulWidget {
-  const MyAdsPage({super.key});
+  String type,
+      description,
+      contact,
+      state,
+      city,
+      village,
+      datePosted,
+      quantity,
+      imageUrl;
+
+  MyAdsPage({
+    super.key,
+    required this.type,
+    required this.imageUrl,
+    required this.description,
+    required this.quantity,
+    required this.contact,
+    required this.state,
+    required this.city,
+    required this.village,
+    required this.datePosted,
+  });
 
   @override
   State<MyAdsPage> createState() => _MyAdsPageState();
@@ -17,7 +40,7 @@ class _MyAdsPageState extends State<MyAdsPage> {
       appBar: PreferredSize(
         preferredSize: Size.fromHeight(50),
         child: GeneralAppBar(
-          title: "Recommendations",
+          title: "Advertisement",
         ),
       ),
       body: SingleChildScrollView(
@@ -29,24 +52,30 @@ class _MyAdsPageState extends State<MyAdsPage> {
               addVerticalSpace(10),
               Center(
                 child: Text(
-                  "Broiler",
+                  widget.type,
                   style: bodyText20w600(color: black),
                 ),
               ),
               addVerticalSpace(25),
               ClipRRect(
                 borderRadius: BorderRadius.circular(15),
-                child: Image.asset(
-                  "assets/images/broiler.png",
-                  height: 127,
-                  width: width(context),
-                  fit: BoxFit.fill,
-                ),
-              ),
-              addVerticalSpace(30),
-              Text(
-                "Category:",
-                style: bodyText15w500(color: black),
+                child: widget.imageUrl == ""
+                    ? Container(
+                        height: 127,
+                        width: width(context),
+                        child: Center(
+                          child: Text(
+                            "No Image",
+                            style: bodyText14w500(color: black),
+                          ),
+                        ),
+                      )
+                    : Image.network(
+                        widget.imageUrl,
+                        height: 127,
+                        width: width(context),
+                        fit: BoxFit.fill,
+                      ),
               ),
               addVerticalSpace(30),
               Text(
@@ -54,12 +83,12 @@ class _MyAdsPageState extends State<MyAdsPage> {
                 style: bodyText15w500(color: black),
               ),
               Text(
-                "Lorem ipsum dolor sit amet consectetur. Arcu vel dignissim suscipit nulla nibh lacus consectetur et et.",
+                widget.description,
                 style: bodyText13normal(color: black),
               ),
               addVerticalSpace(25),
               Text(
-                "Quantity:",
+                "Quantity: ${widget.quantity}",
                 style: bodyText15w500(color: black),
               ),
               addVerticalSpace(25),
@@ -70,7 +99,7 @@ class _MyAdsPageState extends State<MyAdsPage> {
                     style: bodyText15w500(color: black),
                   ),
                   Text(
-                    "+91-9556781395",
+                    "+91-${widget.contact}",
                     style: bodyText15normal(color: black),
                   ),
                 ],
@@ -83,7 +112,7 @@ class _MyAdsPageState extends State<MyAdsPage> {
                     style: bodyText15w500(color: black),
                   ),
                   Text(
-                    "Maharashtra",
+                    widget.state,
                     style: bodyText15normal(color: black),
                   )
                 ],
@@ -100,7 +129,7 @@ class _MyAdsPageState extends State<MyAdsPage> {
                           style: bodyText15w500(color: black),
                         ),
                         Text(
-                          "Pune",
+                          widget.city,
                           style: bodyText15normal(color: black),
                         )
                       ],
@@ -113,7 +142,7 @@ class _MyAdsPageState extends State<MyAdsPage> {
                         style: bodyText15w500(color: black),
                       ),
                       Text(
-                        "Akluj",
+                        widget.village,
                         style: bodyText15normal(color: black),
                       )
                     ],
@@ -128,7 +157,7 @@ class _MyAdsPageState extends State<MyAdsPage> {
                     style: bodyText15w500(color: black),
                   ),
                   Text(
-                    "15/12/2022",
+                    widget.datePosted,
                     style: bodyText15normal(color: black),
                   )
                 ],
@@ -136,7 +165,13 @@ class _MyAdsPageState extends State<MyAdsPage> {
               addVerticalSpace(60),
               CustomButton(
                   text: "Call Seller",
-                  onClick: () {},
+                  onClick: () async {
+                    Uri phoneNo = Uri.parse('tel:+91${widget.contact}');
+                    if (await launchUrl(phoneNo)) {
+                    } else {
+                      Fluttertoast.showToast(msg: "Dialer error!");
+                    }
+                  },
                   width: width(context),
                   height: 58)
             ],

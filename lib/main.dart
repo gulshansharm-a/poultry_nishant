@@ -19,6 +19,8 @@ class MyApp extends StatefulWidget {
 
 class MyAppState extends State<MyApp> {
   late StreamSubscription<User?> user;
+  
+  @override
   void initState() {
     super.initState();
     user = FirebaseAuth.instance.authStateChanges().listen((event) {
@@ -42,7 +44,7 @@ class MyAppState extends State<MyApp> {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      debugShowCheckedModeBanner: false, 
+      debugShowCheckedModeBanner: false,
       title: 'Flutter Demo',
       theme: ThemeData(
         primarySwatch: Colors.blue,

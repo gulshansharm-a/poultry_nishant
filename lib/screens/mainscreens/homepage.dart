@@ -114,7 +114,7 @@ class _HomePageState extends State<HomePage> {
                     ),
                   ),
                   Text(
-                    "Recommendations",
+                    "Advertisements",
                     style: bodyText14w600(color: black),
                   ),
                 ],
