@@ -1,11 +1,28 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:fluttertoast/fluttertoast.dart';
+import 'package:pinput/pinput.dart';
+import 'package:poultry_app/screens/farmsettings/userinfo.dart';
 import 'package:poultry_app/utils/constants.dart';
 import 'package:poultry_app/widgets/custombutton.dart';
 import 'package:poultry_app/widgets/customtextfield.dart';
 import 'package:poultry_app/widgets/generalappbar.dart';
 
-class AddCustomer extends StatelessWidget {
+TextEditingController nameController = TextEditingController();
+TextEditingController numberController = TextEditingController();
+
+class AddCustomer extends StatefulWidget {
   const AddCustomer({super.key});
+  AddCustomerState createState() => AddCustomerState();
+}
+
+class AddCustomerState extends State<AddCustomer> {
+  void dispose() {
+    super.dispose();
+    nameController.clear();
+    numberController.clear();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -29,11 +46,45 @@ class AddCustomer extends StatelessWidget {
                 Column(
                   children: [
                     addVerticalSpace(20),
-                    CustomTextField(hintText: "Name"),
-                    CustomTextField(hintText: "Contact Number"),
+                    CustomTextField(
+                      hintText: "Name",
+                      controller: nameController,
+                    ),
+                    CustomTextField(
+                      hintText: "Contact Number",
+                      controller: numberController,
+                      textType: TextInputType.number,
+                    ),
                   ],
                 ),
-                CustomButton(text: "Add", onClick: () {})
+                CustomButton(
+                    text: "Add",
+                    onClick: () async {
+                      if (nameController.length == 0 ||
+                          numberController.length != 10) {
+                        Fluttertoast.showToast(
+                            msg: "Please enter name or Number!");
+                      } else {
+                        await FirebaseFirestore.instance
+                            .collection("users")
+                            .doc(FirebaseAuth.instance.currentUser!.uid)
+                            .collection("settings")
+                            .doc("Customer List")
+                            .set({
+                          "customerList": FieldValue.arrayUnion([
+                            {
+                              "name": nameController.text.toString(),
+                              "contact":
+                                  "+91 ${numberController.text.toString()}",
+                            }
+                          ]),
+                        }, SetOptions(merge: true));
+
+                        Fluttertoast.showToast(msg: "Data Added Successfully!");
+
+                        Navigator.pop(context, true);
+                      }
+                    }),
               ],
             ),
           ),

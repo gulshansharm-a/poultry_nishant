@@ -13,7 +13,32 @@ import 'package:poultry_app/widgets/generalappbar.dart';
 import 'package:intl/intl.dart';
 
 class AddOrderPage extends StatefulWidget {
-  const AddOrderPage({super.key});
+  bool? isEdit = false;
+  String? orderNo;
+  String? feedSelected;
+  String? company;
+  String? size;
+  int? quantity;
+  String? date;
+  double? price;
+  double? total;
+  String? paymentMethod;
+  int? batchIndex;
+
+  AddOrderPage({
+    super.key,
+    this.isEdit,
+    this.orderNo,
+    this.feedSelected,
+    this.company,
+    this.date,
+    this.size,
+    this.quantity,
+    this.price,
+    this.total,
+    this.paymentMethod,
+    this.batchIndex,
+  });
 
   @override
   State<AddOrderPage> createState() => _AddOrderPageState();
@@ -41,8 +66,25 @@ class _AddOrderPageState extends State<AddOrderPage> {
   @override
   void initState() {
     super.initState();
-    getOrderNumber();
-    getFeedType();
+    if (widget.isEdit == true) {
+      setState(() {
+        orderNo = int.parse(widget.orderNo!);
+        date.text = widget.date!;
+        type = widget.feedSelected!;
+        companyController.text = widget.company!;
+        weightController.text = widget.size!;
+        quantityController.text = widget.quantity.toString();
+        quantity = int.parse(widget.quantity.toString());
+        price = double.parse(widget.price.toString());
+        totalController.text = widget.total.toString();
+        total = double.parse(widget.total.toString());
+        priceController.text = widget.price.toString();
+        option = widget.paymentMethod == "Cash" ? false : true;
+      });
+    } else {
+      getOrderNumber();
+      getFeedType();
+    }
   }
 
   Future<void> getOrderNumber() async {
@@ -79,28 +121,6 @@ class _AddOrderPageState extends State<AddOrderPage> {
       if (value.exists) {
         setState(() {
           feedType = value.data()?['feedType'];
-        });
-      } else {
-        await FirebaseFirestore.instance
-            .collection('users')
-            .doc(FirebaseAuth.instance.currentUser!.uid)
-            .collection("settings")
-            .doc("Feed Type")
-            .set({
-          "feedType": [
-            "Pre Starter",
-            "Starter",
-            "Phase 1",
-            "Phase 2",
-          ]
-        });
-        setState(() {
-          feedType = [
-            "Pre Starter",
-            "Starter",
-            "Phase 1",
-            "Phase 2",
-          ];
         });
       }
     });
@@ -156,7 +176,7 @@ class _AddOrderPageState extends State<AddOrderPage> {
                     child: CustomDropdown(
                       list: feedType,
                       height: 58,
-                      hint: "Feed Type",
+                      hint: type.length == 0 ? "Feed Type" : type,
                       onchanged: (value) {
                         setState(() {
                           type = value;
@@ -188,7 +208,7 @@ class _AddOrderPageState extends State<AddOrderPage> {
                 controller: companyController,
               ),
               CustomTextField(
-                hintText: "Bag Quantity",
+                hintText: "Bag Size",
                 controller: weightController,
                 textType: TextInputType.number,
               ),
@@ -199,12 +219,16 @@ class _AddOrderPageState extends State<AddOrderPage> {
                 onchanged: (value) {
                   setState(() {
                     if (value.toString().isNotEmpty) {
-                      quantity = int.tryParse(value.toString())!;
+                      setState(() {
+                        quantity = int.tryParse(value.toString())!;
+                        total = price * quantity;
+                      });
                       print(quantity);
-                      total = price * quantity;
                     } else {
-                      quantity = 0;
-                      total = 0;
+                      setState(() {
+                        quantity = 0;
+                        total = 0;
+                      });
                       print(quantity);
                     }
                     totalController.text = total.toString();
@@ -221,8 +245,10 @@ class _AddOrderPageState extends State<AddOrderPage> {
                       price = double.tryParse(value.toString())!;
                       total = price * quantity;
                     } else {
-                      price = 0.0;
-                      total = 0.0;
+                      setState(() {
+                        price = 0.0;
+                        total = 0.0;
+                      });
                     }
                     totalController.text = total.toString();
                   });
@@ -272,53 +298,155 @@ class _AddOrderPageState extends State<AddOrderPage> {
               CustomButton(
                   text: "Place Order",
                   onClick: () async {
-                    print(option);
-                    if (date.text.isEmpty ||
-                        type.length == 0 ||
-                        companyController.text.isEmpty ||
-                        weightController.text.isEmpty) {
-                      Fluttertoast.showToast(
-                          msg: "Please fill all the details!");
-                    } else {
+                    if (widget.isEdit == true) {
+                      Map<String, dynamic> upto = {};
+                      Map<String, dynamic> current = {};
+                      Map<String, dynamic> after = {};
+
                       await FirebaseFirestore.instance
                           .collection('orders')
                           .doc(FirebaseAuth.instance.currentUser!.uid)
-                          .set(
-                        {
-                          "order$orderNo": {
-                            "date": date.text,
-                            "feedType": type,
-                            "feedCompany": companyController.text,
-                            "feedWeight":
-                                double.tryParse(weightController.text),
-                            "feedQuantity": quantity,
-                            "originalQuantity": quantity,
-                            "feedPrice": price,
-                            "totalPrice": total,
-                            "orderStatus": "Not Received",
-                            "paymentMethod": option == true ? "Online" : "Cash",
+                          .get()
+                          .then((value) {
+                        if (value.exists) {
+                          // print(value.data()!["order1"]["date"]);
+                          for (int i = 0; i <= value.data()!.length - 1; i++) {
+                            if (i < widget.batchIndex!) {
+                              upto["order${i + 1}"] = {
+                                "date": value.data()!["order${i + 1}"]["date"],
+                                "feedType": value.data()!["order${i + 1}"]
+                                    ["feedType"],
+                                "feedCompany": value.data()!["order${i + 1}"]
+                                    ["feedCompany"],
+                                "feedWeight": double.tryParse(value
+                                    .data()!["order${i + 1}"]["feedWeight"]
+                                    .toString()),
+                                "feedQuantity": int.parse(value
+                                    .data()!["order${i + 1}"]["feedQuantity"]
+                                    .toString()),
+                                "originalQuantity": int.parse(value
+                                    .data()!["order${i + 1}"]
+                                        ["originalQuantity"]
+                                    .toString()),
+                                "feedPrice": double.parse(value
+                                    .data()!["order${i + 1}"]["feedPrice"]
+                                    .toString()),
+                                "totalPrice": double.parse(value
+                                    .data()!["order${i + 1}"]["totalPrice"]
+                                    .toString()),
+                                "orderStatus": value.data()!["order${i + 1}"]
+                                    ["orderStatus"],
+                                "paymentMethod": value.data()!["order${i + 1}"]
+                                    ["paymentMethod"],
+                              };
+                            } else if (i == widget.batchIndex) {
+                              current["order${i + 1}"] = {
+                                "date": date.text,
+                                "feedType": type,
+                                "feedCompany": companyController.text,
+                                "feedWeight":
+                                    double.tryParse(weightController.text),
+                                "feedQuantity": quantity,
+                                "originalQuantity": quantity,
+                                "feedPrice": price,
+                                "totalPrice": total,
+                                "orderStatus": "Not Received",
+                                "paymentMethod":
+                                    option == true ? "Online" : "Cash",
+                              };
+                            } else {
+                              after["order${i + 1}"] = {
+                                "date": value.data()!["order${i + 1}"]["date"],
+                                "feedType": value.data()!["order${i + 1}"]
+                                    ["feedType"],
+                                "feedCompany": value.data()!["order${i + 1}"]
+                                    ["feedCompany"],
+                                "feedWeight": double.tryParse(value
+                                    .data()!["order${i + 1}"]["feedWeight"]
+                                    .toString()),
+                                "feedQuantity": int.parse(value
+                                    .data()!["order${i + 1}"]["feedQuantity"]
+                                    .toString()),
+                                "originalQuantity": int.parse(value
+                                    .data()!["order${i + 1}"]
+                                        ["originalQuantity"]
+                                    .toString()),
+                                "feedPrice": double.parse(value
+                                    .data()!["order${i + 1}"]["feedPrice"]
+                                    .toString()),
+                                "totalPrice": double.parse(value
+                                    .data()!["order${i + 1}"]["totalPrice"]
+                                    .toString()),
+                                "orderStatus": value.data()!["order${i + 1}"]
+                                    ["orderStatus"],
+                                "paymentMethod": value.data()!["order${i + 1}"]
+                                    ["paymentMethod"],
+                              };
+                            }
                           }
-                        },
-                        SetOptions(merge: true),
-                      );
-                      print(type);
-                      // print({
-                      //   "date": date.text,
-                      //   "feedType": _customDropdown.value,
-                      //   "feedCompany": companyController.text,
-                      //   "feedWeight": double.tryParse(weightController.text),
-                      //   "feedQuantity": quantity,
-                      //   "feedPrice": price,
-                      //   "totalPrice": total,
-                      //   "paymentMethod": option == true ? "Online" : "Cash",
-                      // });
-                      showDialog(
-                          context: context,
-                          builder: (context) => ShowDialogBox(
-                                message: "Order Placed!!",
-                                subMessage: '',
-                              ));
+                        }
+                      });
 
+                      Map<String, dynamic> updatedMap = {};
+                      updatedMap.addAll(upto);
+                      updatedMap.addAll(current);
+                      updatedMap.addAll(after);
+
+                      await FirebaseFirestore.instance
+                          .collection('orders')
+                          .doc(FirebaseAuth.instance.currentUser!.uid)
+                          .set(updatedMap);
+
+                      Fluttertoast.showToast(msg: "Data updated successfully!");
+                    } else {
+                      print(option);
+                      if (date.text.isEmpty ||
+                          type.length == 0 ||
+                          companyController.text.isEmpty ||
+                          weightController.text.isEmpty) {
+                        Fluttertoast.showToast(
+                            msg: "Please fill all the details!");
+                      } else {
+                        await FirebaseFirestore.instance
+                            .collection('orders')
+                            .doc(FirebaseAuth.instance.currentUser!.uid)
+                            .set(
+                          {
+                            "order$orderNo": {
+                              "date": date.text,
+                              "feedType": type,
+                              "feedCompany": companyController.text,
+                              "feedWeight":
+                                  double.tryParse(weightController.text),
+                              "feedQuantity": quantity,
+                              "originalQuantity": quantity,
+                              "feedPrice": price,
+                              "totalPrice": total,
+                              "orderStatus": "Not Received",
+                              "paymentMethod":
+                                  option == true ? "Online" : "Cash",
+                            }
+                          },
+                          SetOptions(merge: true),
+                        );
+                        print(type);
+                        // print({
+                        //   "date": date.text,
+                        //   "feedType": _customDropdown.value,
+                        //   "feedCompany": companyController.text,
+                        //   "feedWeight": double.tryParse(weightController.text),
+                        //   "feedQuantity": quantity,
+                        //   "feedPrice": price,
+                        //   "totalPrice": total,
+                        //   "paymentMethod": option == true ? "Online" : "Cash",
+                        // });
+                        showDialog(
+                            context: context,
+                            builder: (context) => ShowDialogBox(
+                                  message: "Order Placed!!",
+                                  subMessage: '',
+                                ));
+                      }
                       Future.delayed(Duration(seconds: 2), () {
                         Navigator.pop(context);
                         Navigator.pop(context);

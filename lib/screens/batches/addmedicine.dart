@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 import 'package:poultry_app/utils/constants.dart';
 import 'package:poultry_app/widgets/custombutton.dart';
 import 'package:poultry_app/widgets/customtextfield.dart';
@@ -11,7 +12,25 @@ import 'package:intl/intl.dart';
 class AddMedicinePage extends StatefulWidget {
   String batchId;
   String owner;
-  AddMedicinePage({super.key, required this.batchId, required this.owner});
+  String? description;
+  String? medicine;
+  String? date;
+  int? batchIndex;
+  bool? isEdit = false;
+  List? upto;
+  List? after;
+  AddMedicinePage({
+    super.key,
+    required this.batchId,
+    required this.owner,
+    this.isEdit,
+    this.description,
+    this.medicine,
+    this.date,
+    this.batchIndex,
+    this.upto,
+    this.after,
+  });
 
   @override
   State<AddMedicinePage> createState() => _AddMedicinePageState();
@@ -82,6 +101,13 @@ class _AddMedicinePageState extends State<AddMedicinePage> {
 
   void initState() {
     super.initState();
+    if (widget.isEdit == true) {
+      descriptionController.text = widget.description!;
+      medicineController.text = widget.medicine!;
+      dateController.text = DateFormat("dd/MMM/yyyy")
+          .format(DateFormat("dd/MM/yyyy").parse(widget.date!))
+          .toLowerCase();
+    }
     getDateDetails();
   }
 
@@ -153,31 +179,55 @@ class _AddMedicinePageState extends State<AddMedicinePage> {
                 child: CustomButton(
                     text: "Save",
                     onClick: () async {
-                      await FirebaseFirestore.instance
-                          .collection('users')
-                          .doc(widget.owner)
-                          .collection('Batches')
-                          .doc(widget.batchId)
-                          .collection('BatchData')
-                          .doc('Medicine')
-                          .set({
-                        "medicineDetails": FieldValue.arrayUnion([
-                          {
-                            "date": dateController.text.toString(),
-                            'Medicine': medicineController.text.toString(),
-                            'Description':
-                                descriptionController.text.toString(),
-                          }
-                        ])
-                      }, SetOptions(merge: true));
+                      if (widget.isEdit == true) {
+                        Map current = {};
 
-                      if (_formKey.currentState!.validate()) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('Processing Data')),
-                        );
+                        current.addAll({
+                          "date": dateController.text.toString(),
+                          'Medicine': medicineController.text.toString(),
+                          'Description': descriptionController.text.toString(),
+                        });
 
-                        Navigator.of(context).pop();
+                        await FirebaseFirestore.instance
+                            .collection('users')
+                            .doc(widget.owner)
+                            .collection('Batches')
+                            .doc(widget.batchId)
+                            .collection('BatchData')
+                            .doc('Medicine')
+                            .set({
+                          "medicineDetails":
+                              widget.upto! + [current] + widget.after!,
+                        });
+
+                        Fluttertoast.showToast(
+                            msg: "Data updated successfully!");
+                      } else {
+                        await FirebaseFirestore.instance
+                            .collection('users')
+                            .doc(widget.owner)
+                            .collection('Batches')
+                            .doc(widget.batchId)
+                            .collection('BatchData')
+                            .doc('Medicine')
+                            .set({
+                          "medicineDetails": FieldValue.arrayUnion([
+                            {
+                              "date": dateController.text.toString(),
+                              'Medicine': medicineController.text.toString(),
+                              'Description':
+                                  descriptionController.text.toString(),
+                            }
+                          ])
+                        }, SetOptions(merge: true));
+
+                        if (_formKey.currentState!.validate()) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text('Processing Data')),
+                          );
+                        }
                       }
+                      Navigator.pop(context, true);
                     },
                     width: width(context),
                     height: 55),

@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 import 'package:poultry_app/utils/constants.dart';
 import 'package:poultry_app/widgets/custombutton.dart';
 import 'package:poultry_app/widgets/customtextfield.dart';
@@ -11,7 +12,24 @@ import 'package:intl/intl.dart';
 class AddBodyWeight extends StatefulWidget {
   String batchId;
   String owner;
-  AddBodyWeight({super.key, required this.batchId, required this.owner});
+  String? date;
+  bool? isEdit = false;
+  int? batchIndex;
+  double? bodyWeight;
+  List? upto;
+  List? after;
+
+  AddBodyWeight({
+    super.key,
+    required this.batchId,
+    required this.owner,
+    this.bodyWeight,
+    this.date,
+    this.batchIndex,
+    this.isEdit,
+    this.upto,
+    this.after,
+  });
 
   @override
   State<AddBodyWeight> createState() => _AddBodyWeightState();
@@ -82,6 +100,12 @@ class _AddBodyWeightState extends State<AddBodyWeight> {
 
   void initState() {
     super.initState();
+    if (widget.isEdit == true) {
+      dateController.text = DateFormat("dd/MMM/yyyy")
+          .format(DateFormat("dd/MM/yyyy").parse(widget.date!))
+          .toLowerCase();
+      bodyWeightController.text = widget.bodyWeight.toString();
+    }
     getDateDetails();
   }
 
@@ -136,26 +160,53 @@ class _AddBodyWeightState extends State<AddBodyWeight> {
             child: CustomButton(
                 text: "Save",
                 onClick: () async {
-                  await FirebaseFirestore.instance
-                      .collection("users")
-                      .doc(widget.owner)
-                      .collection("Batches")
-                      .doc(widget.batchId)
-                      .collection("BatchData")
-                      .doc("Body Weight")
-                      .set({
-                    "weightDetails": FieldValue.arrayUnion(
-                      [
-                        {
-                          "date": dateController.text.toString(),
-                          "bodyWeight": double.parse(
-                              bodyWeightController.text.toString()),
-                        }
-                      ],
-                    ),
-                  }, SetOptions(merge: true));
+                  if (widget.isEdit == true) {
+                    Map current = {};
 
-                  Navigator.pop(context);
+                    current.addAll({
+                      "date": dateController.text.toString(),
+                      "bodyWeight":
+                          double.parse(bodyWeightController.text.toString()),
+                    });
+
+                    await FirebaseFirestore.instance
+                        .collection("users")
+                        .doc(widget.owner)
+                        .collection("Batches")
+                        .doc(widget.batchId)
+                        .collection("BatchData")
+                        .doc("Body Weight")
+                        .set(
+                      {
+                        "weightDetails":
+                            widget.upto! + [current] + widget.after!,
+                      },
+                    );
+
+                    Fluttertoast.showToast(msg: "Data updated successfully!");
+                  } else {
+                    await FirebaseFirestore.instance
+                        .collection("users")
+                        .doc(widget.owner)
+                        .collection("Batches")
+                        .doc(widget.batchId)
+                        .collection("BatchData")
+                        .doc("Body Weight")
+                        .set(
+                      {
+                        "weightDetails": FieldValue.arrayUnion([
+                          {
+                            "date": dateController.text.toString(),
+                            "bodyWeight": double.parse(
+                                bodyWeightController.text.toString()),
+                          }
+                        ]),
+                      },
+                      SetOptions(merge: true),
+                    );
+                  }
+
+                  Navigator.pop(context, true);
                 },
                 width: width(context),
                 height: 55),

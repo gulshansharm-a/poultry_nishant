@@ -15,6 +15,7 @@ class CustomDropdown extends StatefulWidget {
   final double? radius;
   final double? hp;
   Function? onchanged;
+  bool? disabled = false;
   TextEditingController? controller;
   final bool? icon;
 
@@ -33,6 +34,7 @@ class CustomDropdown extends StatefulWidget {
       required this.height,
       required this.hint,
       this.width,
+      this.disabled,
       this.value});
 
   @override
@@ -100,18 +102,20 @@ class _CustomDropdownState extends State<CustomDropdown> {
                         return DropdownMenuItem(
                             value: e.toString(), child: Text(e.toString()));
                       }).toList(),
-                      onChanged: (value) {
-                        setState(() {
-                          selectData = value!;
-                          widget.value = value;
-                        });
-                        widget.value = selectData;
-                        if (widget.onchanged != null) {
-                          widget.onchanged!(value);
-                        }
-                        // print(widget.value);
-                        // print(widget.value);
-                      }),
+                      onChanged: 
+                          
+                           (value) {
+                              setState(() {
+                                selectData = value!;
+                                widget.value = value;
+                              });
+                              widget.value = selectData;
+                              if (widget.onchanged != null) {
+                                widget.onchanged!(value);
+                              }
+                              // print(widget.value);
+                              // print(widget.value);
+                            }),
                 ),
               ],
             ),

@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:poultry_app/screens/batches/addvaccination.dart';
+import 'package:poultry_app/screens/farmsettings/userinfo.dart';
 import 'package:poultry_app/utils/constants.dart';
 import 'package:poultry_app/widgets/custombutton.dart';
 import 'package:poultry_app/widgets/floatbutton.dart';
@@ -25,10 +26,17 @@ class VaccinationPage extends StatefulWidget {
 
 class _VaccinationPageState extends State<VaccinationPage> {
   int index = 0;
-
+  List vaccinationDetails = [];
+  List editDetails = [];
+  bool isLoading = true;
   DateTime batchDate = DateTime.utc(1800, 01, 01);
 
   Future<void> getBatchData() async {
+    setState(() {
+      isLoading = true;
+      vaccinationDetails.clear();
+      editDetails.clear(); 
+    });
     await FirebaseFirestore.instance
         .collection('users')
         .doc(widget.owner)
@@ -83,6 +91,206 @@ class _VaccinationPageState extends State<VaccinationPage> {
         batchDate = DateTime.utc(year, month, day);
       });
     });
+
+    await FirebaseFirestore.instance
+        .collection("users")
+        .doc(widget.owner)
+        .collection("Batches")
+        .doc(widget.batchId)
+        .collection("BatchData")
+        .doc("Vaccination")
+        .get()
+        .then((value) {
+      if (!value.exists) {
+      } else {
+        for (int i = 0; i < value.data()!["vaccinationDetails"].length; i++) {
+          List dates = value
+              .data()!["vaccinationDetails"][i]["date"]
+              .toString()
+              .split("/");
+          int month = 0;
+          int day = int.parse(dates[0]);
+          switch (dates[1]) {
+            case "jan":
+              month = 1;
+              break;
+            case "feb":
+              month = 2;
+              break;
+            case "mar":
+              month = 3;
+              break;
+            case "apr":
+              month = 4;
+              break;
+            case "may":
+              month = 5;
+              break;
+            case "jun":
+              month = 6;
+              break;
+            case "jul":
+              month = 7;
+              break;
+            case "aug":
+              month = 8;
+              break;
+            case "sep":
+              month = 9;
+              break;
+            case "oct":
+              month = 10;
+              break;
+            case "nov":
+              month = 11;
+              break;
+            case "dec":
+              month = 12;
+              break;
+          }
+          int year = int.parse(dates[2]);
+          DateTime vaccinationDate = DateTime.utc(year, month, day);
+          setState(() {
+            vaccinationDetails.add({
+              "date": DateFormat("dd/MM/yyyy").format(vaccinationDate),
+              "day": vaccinationDate.difference(batchDate).inDays + 1,
+              "name": value.data()!["vaccinationDetails"][i]["vaccineName"],
+              "vaccineType": value.data()!["vaccinationDetails"][i]
+                  ["vaccineType"],
+              "method": value.data()!["vaccinationDetails"][i]["method"],
+              "description": value.data()!["vaccinationDetails"][i]
+                  ["Description"],
+            });
+
+            editDetails.add({
+              "date": value.data()!["vaccinationDetails"][i]["date"],
+              "method": value.data()!["vaccinationDetails"][i]["method"],
+              "vaccineName": value.data()!["vaccinationDetails"][i]
+                  ["vaccineName"],
+              "vaccineType": value.data()!["vaccinationDetails"][i]
+                  ["vaccineType"],
+              "Description": value.data()!["vaccinationDetails"][i]
+                  ["Description"],
+            });
+          });
+        }
+        DateFormat inputFormat = DateFormat("dd/MM/yyyy");
+        setState(() {
+          vaccinationDetails.sort((first, second) =>
+              (inputFormat.parse(first["date"]))
+                  .compareTo((inputFormat.parse(second["date"]))));
+
+          editDetails.sort((first, second) {
+            String date1 = first["date"];
+            String date2 = second["date"];
+            DateTime dateTime1 = DateTime.now(), dateTime2 = DateTime.now();
+
+            List date = date1.toString().split("/");
+            int month = 0;
+            int day = int.parse(date[0]);
+            switch (date[1]) {
+              case "jan":
+                month = 1;
+                break;
+              case "feb":
+                month = 2;
+                break;
+              case "mar":
+                month = 3;
+                break;
+              case "apr":
+                month = 4;
+                break;
+              case "may":
+                month = 5;
+                break;
+              case "jun":
+                month = 6;
+                break;
+              case "jul":
+                month = 7;
+                break;
+              case "aug":
+                month = 8;
+                break;
+              case "sep":
+                month = 9;
+                break;
+              case "oct":
+                month = 10;
+                break;
+              case "nov":
+                month = 11;
+                break;
+              case "dec":
+                month = 12;
+                break;
+            }
+            int year = int.parse(date[2]);
+
+            setState(() {
+              dateTime1 = inputFormat
+                  .parse(inputFormat.format(DateTime.utc(year, month, day)));
+            });
+
+            date = date2.toString().split("/");
+            month = 0;
+            day = int.parse(date[0]);
+            switch (date[1]) {
+              case "jan":
+                month = 1;
+                break;
+              case "feb":
+                month = 2;
+                break;
+              case "mar":
+                month = 3;
+                break;
+              case "apr":
+                month = 4;
+                break;
+              case "may":
+                month = 5;
+                break;
+              case "jun":
+                month = 6;
+                break;
+              case "jul":
+                month = 7;
+                break;
+              case "aug":
+                month = 8;
+                break;
+              case "sep":
+                month = 9;
+                break;
+              case "oct":
+                month = 10;
+                break;
+              case "nov":
+                month = 11;
+                break;
+              case "dec":
+                month = 12;
+                break;
+            }
+            year = int.parse(date[2]);
+
+            setState(() {
+              dateTime2 = inputFormat
+                  .parse(inputFormat.format(DateTime.utc(year, month, day)));
+            });
+
+            return (dateTime1).compareTo(dateTime2);
+          });
+        });
+        print(vaccinationDetails);
+      }
+    });
+
+    setState(() {
+      isLoading = false;
+    });
   }
 
   void initState() {
@@ -97,12 +305,21 @@ class _VaccinationPageState extends State<VaccinationPage> {
           ? widget.accessLevel == 0 || widget.accessLevel == 2
               ? FloatedButton(
                   onTap: () {
-                    NextScreen(
+                    Navigator.push(
                         context,
-                        AddVaccinationPage(
-                          docId: widget.batchId,
-                          owner: widget.owner,
-                        ));
+                        MaterialPageRoute(
+                            builder: (context) => AddVaccinationPage(
+                                  docId: widget.batchId,
+                                  owner: widget.owner,
+                                ))).then((value) {
+                      if (value == null) {
+                        return;
+                      } else {
+                        if (value) {
+                          getBatchData();
+                        }
+                      }
+                    });
                   },
                 )
               : null
@@ -170,132 +387,91 @@ class _VaccinationPageState extends State<VaccinationPage> {
                   "No vaccination data",
                   style: bodyText15w500(color: black),
                 ))
-              : StreamBuilder(
-                  stream: FirebaseFirestore.instance
-                      .collection("users")
-                      .doc(widget.owner)
-                      .collection("Batches")
-                      .doc(widget.batchId)
-                      .collection("BatchData")
-                      .doc("Vaccination")
-                      .snapshots(),
-                  builder: (builder, snapshot) {
-                    if (!snapshot.hasData || !snapshot.data!.exists) {
-                      if (snapshot.data?.exists == null) {
-                        return CircularProgressIndicator();
-                      } else {
-                        return Center(
-                            child: Text(
-                          "No Vaccination data",
-                          style: bodyText15w500(color: black),
-                        ));
-                      }
-                    } else {
-                      return ListView.separated(
-                          shrinkWrap: true,
-                          physics: NeverScrollableScrollPhysics(),
-                          itemBuilder: (context, index) {
-                            List dates = snapshot.data!
-                                .data()!["vaccinationDetails"][index]["date"]
-                                .toString()
-                                .split("/");
-                            int month = 0;
-                            int day = int.parse(dates[0]);
-                            switch (dates[1]) {
-                              case "jan":
-                                month = 1;
-                                break;
-                              case "feb":
-                                month = 2;
-                                break;
-                              case "mar":
-                                month = 3;
-                                break;
-                              case "apr":
-                                month = 4;
-                                break;
-                              case "may":
-                                month = 5;
-                                break;
-                              case "jun":
-                                month = 6;
-                                break;
-                              case "jul":
-                                month = 7;
-                                break;
-                              case "aug":
-                                month = 8;
-                                break;
-                              case "sep":
-                                month = 9;
-                                break;
-                              case "oct":
-                                month = 10;
-                                break;
-                              case "nov":
-                                month = 11;
-                                break;
-                              case "dec":
-                                month = 12;
-                                break;
-                            }
-                            int year = int.parse(dates[2]);
-                            DateTime vaccinationDate =
-                                DateTime.utc(year, month, day);
-                            return Container(
-                              padding: EdgeInsets.symmetric(
-                                  horizontal: 15, vertical: 12),
-                              height: 70,
-                              child: Column(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceBetween,
-                                children: [
-                                  Row(
-                                    mainAxisAlignment:
-                                        MainAxisAlignment.spaceBetween,
-                                    children: [
-                                      Text(
-                                        "${DateFormat("dd/MM/yyyy").format(vaccinationDate)} ",
-                                        style:
-                                            bodyText12normal(color: darkGray),
-                                      ),
-                                      Text(
-                                        "${snapshot.data!.data()!["vaccinationDetails"][index]["vaccineType"]}",
-                                        style:
-                                            bodyText14normal(color: darkGray),
-                                      )
-                                    ],
+              : isLoading
+                  ? CircularProgressIndicator()
+                  : ListView.separated(
+                      shrinkWrap: true,
+                      physics: NeverScrollableScrollPhysics(),
+                      itemBuilder: (context, index) {
+                        return InkWell(
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => AddVaccinationPage(
+                                  docId: widget.batchId,
+                                  owner: widget.owner,
+                                  isEdit: true,
+                                  description: vaccinationDetails[index]
+                                      ["description"],
+                                  batchIndex: index,
+                                  date: vaccinationDetails[index]["date"],
+                                  type: vaccinationDetails[index]
+                                      ["vaccineType"],
+                                  method: vaccinationDetails[index]["method"],
+                                  name: vaccinationDetails[index]["name"],
+                                  upto: editDetails.sublist(0, index),
+                                  after: editDetails.sublist(
+                                    index + 1,
                                   ),
-                                  Row(
-                                    mainAxisAlignment:
-                                        MainAxisAlignment.spaceBetween,
-                                    children: [
-                                      Text(
-                                        "Day ${vaccinationDate.difference(batchDate).inDays + 1}",
-                                        style: bodyText17w500(color: black),
-                                      ),
-                                      Text(
-                                        "${snapshot.data!.data()!["vaccinationDetails"][index]["method"]}",
-                                        style:
-                                            bodyText14normal(color: darkGray),
-                                      )
-                                    ],
-                                  )
-                                ],
+                                ),
                               ),
-                            );
+                            ).then((value) {
+                              if (value == null) {
+                                return;
+                              } else {
+                                if (value) {
+                                  getBatchData();
+                                }
+                              }
+                            });
                           },
-                          separatorBuilder: (context, index) {
-                            return Divider(
-                              height: 0,
-                            );
-                          },
-                          itemCount: snapshot.data!
-                              .data()!["vaccinationDetails"]
-                              .length);
-                    }
-                  },
-                ),
+                          child: Container(
+                            padding: EdgeInsets.symmetric(
+                                horizontal: 15, vertical: 12),
+                            height: 70,
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Row(
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    Text(
+                                      "${vaccinationDetails[index]["date"]} ",
+                                      style: bodyText12normal(color: darkGray),
+                                    ),
+                                    Text(
+                                      "${vaccinationDetails[index]["vaccineType"]}",
+                                      style: bodyText14normal(color: darkGray),
+                                    )
+                                  ],
+                                ),
+                                Row(
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    Text(
+                                      "Day ${vaccinationDetails[index]["day"]}",
+                                      style: bodyText17w500(color: black),
+                                    ),
+                                    Text(
+                                      "${vaccinationDetails[index]["method"]}",
+                                      style: bodyText14normal(color: darkGray),
+                                    )
+                                  ],
+                                )
+                              ],
+                            ),
+                          ),
+                        );
+                      },
+                      separatorBuilder: (context, index) {
+                        return Divider(
+                          height: 0,
+                        );
+                      },
+                      itemCount: vaccinationDetails.length),
           Divider(
             height: 0,
           ),

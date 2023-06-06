@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 import 'package:poultry_app/widgets/custombutton.dart';
 import 'package:poultry_app/widgets/customtextfield.dart';
 import 'package:intl/intl.dart';
@@ -9,21 +10,44 @@ import '../../widgets/generalappbar.dart';
 
 var user = FirebaseAuth.instance.currentUser?.uid;
 
-class AddNotesPage extends StatelessWidget {
+class AddNotesPage extends StatefulWidget {
   String batchId;
-  String owner; 
-  AddNotesPage({super.key, required this.batchId, required this.owner});
-  final _formKey = GlobalKey<FormState>();
+  String owner;
+  bool? isEdit;
+  String? title;
+  int? batchIndex;
+  String? date;
+  String? description;
+  List? upto;
+  List? after;
+  AddNotesPage({
+    super.key,
+    required this.batchId,
+    required this.owner,
+    this.isEdit,
+    this.title,
+    this.description,
+    this.batchIndex,
+    this.date,
+    this.upto,
+    this.after,
+  });
+  AddNotesState createState() => AddNotesState();
+}
 
-  final fireStore = FirebaseFirestore.instance
-      .collection('users')
-      .doc(user)
-      .collection("Batches")
-      .doc(user)
-      .collection("AddNotes");
+class AddNotesState extends State<AddNotesPage> {
+  final _formKey = GlobalKey<FormState>();
 
   final titleController = TextEditingController();
   final descriptionController = TextEditingController();
+
+  void initState() {
+    super.initState();
+    if (widget.isEdit == true) {
+      titleController.text = widget.title!;
+      descriptionController.text = widget.description!;
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -82,29 +106,53 @@ class AddNotesPage extends StatelessWidget {
               CustomButton(
                   text: 'Add',
                   onClick: () async {
-                    if (_formKey.currentState!.validate()) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Processing Data')),
-                      );
+                    if (widget.isEdit == true) {
+                      Map current = {};
+
+                      current.addAll({
+                        "date": widget.date,
+                        "Title": titleController.text.toString(),
+                        "Description": descriptionController.text.toString(),
+                      });
+
+                      await FirebaseFirestore.instance
+                          .collection('users')
+                          .doc(widget.owner)
+                          .collection('Batches')
+                          .doc(widget.batchId)
+                          .collection('BatchData')
+                          .doc('Notes')
+                          .set({
+                        "notes": widget.upto! + [current] + widget.after!,
+                      });
+
+                      Fluttertoast.showToast(msg: "Data updated successfully!");
+                    } else {
+                      if (_formKey.currentState!.validate()) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('Processing Data')),
+                        );
+                      }
+                      await FirebaseFirestore.instance
+                          .collection('users')
+                          .doc(widget.owner)
+                          .collection('Batches')
+                          .doc(widget.batchId)
+                          .collection('BatchData')
+                          .doc('Notes')
+                          .set({
+                        "notes": FieldValue.arrayUnion([
+                          {
+                            "date":
+                                DateFormat("dd/MM/yyyy").format(DateTime.now()),
+                            'Title': titleController.text.toString(),
+                            'Description':
+                                descriptionController.text.toString(),
+                          }
+                        ]),
+                      }, SetOptions(merge: true));
                     }
-                    await FirebaseFirestore.instance
-                        .collection('users')
-                        .doc(owner)
-                        .collection('Batches')
-                        .doc(batchId)
-                        .collection('BatchData')
-                        .doc('Notes')
-                        .set({
-                      "notes": FieldValue.arrayUnion([
-                        {
-                          "date":
-                              DateFormat("dd/MM/yyyy").format(DateTime.now()),
-                          'Title': titleController.text.toString(),
-                          'Description': descriptionController.text.toString(),
-                        }
-                      ]),
-                    }, SetOptions(merge: true));
-                    Navigator.of(context).pop();
+                    Navigator.pop(context, true);
                   }),
             ],
           ),

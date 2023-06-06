@@ -65,7 +65,7 @@ class _HomePageState extends State<HomePage> {
                   CustomSearchBox(),
                   addVerticalSpace(10),
                   Container(
-                    height: 132,
+                    height: 180,
                     width: width(context),
                     child: Image.asset(
                       "assets/images/happy.png",

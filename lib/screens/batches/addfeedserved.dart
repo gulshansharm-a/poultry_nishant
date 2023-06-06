@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
+import 'package:poultry_app/screens/batches/batches.dart';
 import 'package:poultry_app/utils/constants.dart';
 import 'package:poultry_app/widgets/custombutton.dart';
 import 'package:poultry_app/widgets/customdropdown.dart';
@@ -33,6 +34,7 @@ class _AddFeedServedPageState extends State<AddFeedServedPage> {
 
   double stockForType = 0.0;
   String feedSelected = "";
+  DateTime batchDate = DateTime.utc(1800, 01, 01);
 
   final dateController = TextEditingController(
       text: DateFormat("dd/MMM/yyyy").format(DateTime.now()).toLowerCase());
@@ -43,6 +45,63 @@ class _AddFeedServedPageState extends State<AddFeedServedPage> {
   Map stockAvailable = {};
   Map prices = {};
   double priceFeed = 0.0;
+
+  Future<void> getBatchInformation() async {
+    await FirebaseFirestore.instance
+        .collection('users')
+        .doc(widget.owner)
+        .collection("Batches")
+        .doc(widget.docId)
+        .get()
+        .then((value) {
+      List date = value.data()!["date"].toString().split("/");
+      int month = 0;
+      int day = int.parse(date[0]);
+      switch (date[1]) {
+        case "jan":
+          month = 1;
+          break;
+        case "feb":
+          month = 2;
+          break;
+        case "mar":
+          month = 3;
+          break;
+        case "apr":
+          month = 4;
+          break;
+        case "may":
+          month = 5;
+          break;
+        case "jun":
+          month = 6;
+          break;
+        case "jul":
+          month = 7;
+          break;
+        case "aug":
+          month = 8;
+          break;
+        case "sep":
+          month = 9;
+          break;
+        case "oct":
+          month = 10;
+          break;
+        case "nov":
+          month = 11;
+          break;
+        case "dec":
+          month = 12;
+          break;
+      }
+      int year = int.parse(date[2]);
+      //get individual dates!
+      setState(() {
+        batchDate = DateTime.utc(year, month, day);
+      });
+    });
+  }
 
   Future<void> getFeedType() async {
     await FirebaseFirestore.instance
@@ -172,6 +231,7 @@ class _AddFeedServedPageState extends State<AddFeedServedPage> {
                             hintText: "Date",
                             suffix: true,
                             controller: dateController,
+                            cannotSelectBefore: batchDate,
                             validator: (value) {
                               if (value == null || value.length == 0) {
                                 return 'Enter Date';
@@ -347,7 +407,7 @@ class _AddFeedServedPageState extends State<AddFeedServedPage> {
                           ]),
                         }, SetOptions(merge: true));
 
-                        Navigator.of(context).pop();
+                        Navigator.pop(context, true);
                       }
                     }
                   },

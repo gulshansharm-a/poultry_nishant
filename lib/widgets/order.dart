@@ -1,6 +1,8 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:fluttertoast/fluttertoast.dart';
+import 'package:poultry_app/screens/feed/addorder.dart';
 import 'package:poultry_app/utils/constants.dart';
 import 'package:poultry_app/widgets/customdropdown.dart';
 import 'package:poultry_app/widgets/navigation.dart';
@@ -41,7 +43,7 @@ class _OrderWidgetState extends State<OrderWidget> {
         .then((value) {
       if (value.exists) {
         // print(value.data()!["order1"]["date"]);
-        for (int i = 0; i < value.data()!.length; i++) {
+        for (int i = value.data()!.length - 1; i >= 0; i--) {
           List date =
               value.data()!["order${i + 1}"]["date"].toString().split("/");
           String day = date[0];
@@ -55,6 +57,7 @@ class _OrderWidgetState extends State<OrderWidget> {
             orderDetails.add({
               "orderNo": "Order ${i + 1}",
               "date": formattedDate,
+              "unformattedDate": value.data()!["order${i + 1}"]["date"],
               "feedCompany": value.data()!["order${i + 1}"]["feedCompany"],
               "originalQuantity": value.data()!["order${i + 1}"]
                   ["originalQuantity"],
@@ -62,6 +65,8 @@ class _OrderWidgetState extends State<OrderWidget> {
               "feedWeight": value.data()!["order${i + 1}"]["feedWeight"],
               "orderStatus": value.data()!["order${i + 1}"]["orderStatus"],
               "totalPrice": value.data()!["order${i + 1}"]["totalPrice"],
+              "paymentMethod": value.data()!["order${i + 1}"]["paymentMethod"],
+              "feedPrice": value.data()!["order${i + 1}"]["feedPrice"],
             });
 
             totalBagQuantity += int.tryParse(value
@@ -237,49 +242,95 @@ class _OrderWidgetState extends State<OrderWidget> {
                     shrinkWrap: true,
                     physics: NeverScrollableScrollPhysics(),
                     itemBuilder: (context, index) {
-                      return Container(
-                        padding:
-                            EdgeInsets.symmetric(horizontal: 15, vertical: 12),
-                        height: 100,
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text(
-                              "${orderDetails[index]["orderNo"]}",
-                              style: bodyText10w600(color: yellow),
-                            ),
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Text(
-                                  "${orderDetails[index]["feedType"]}",
-                                  style: bodyText15w500(color: black),
-                                ),
-                                Text(
-                                  "${orderDetails[index]["totalPrice"]}",
-                                  style: bodyText18w600(color: black),
-                                ),
-                              ],
-                            ),
-                            Text(
-                              "${orderDetails[index]["originalQuantity"]}",
-                              style: bodyText12w500(color: darkGray),
-                            ),
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Text(
-                                  "${orderDetails[index]["date"]}",
-                                  style: bodyText12w500(color: darkGray),
-                                ),
-                                Text(
-                                  "Order Status: ${orderDetails[index]["orderStatus"]}",
-                                  style: bodyText12w500(color: darkGray),
-                                ),
-                              ],
-                            ),
-                          ],
+                      return InkWell(
+                        onTap: () {
+                          if (orderDetails[index]["orderStatus"] ==
+                              "Not Received") {
+                            Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                    builder: (context) => AddOrderPage(
+                                          isEdit: true,
+                                          batchIndex:
+                                              orderDetails.length - index - 1,
+                                          date: orderDetails[index]
+                                              ["unformattedDate"],
+                                          company: orderDetails[index]
+                                              ["feedCompany"],
+                                          quantity: int.parse(
+                                              orderDetails[index]
+                                                      ["originalQuantity"]
+                                                  .toString()),
+                                          feedSelected: orderDetails[index]
+                                              ["feedType"],
+                                          size: orderDetails[index]
+                                                  ["feedWeight"]
+                                              .toString(),
+                                          orderNo: orderDetails[index]
+                                                  ["orderNo"]
+                                              .toString()
+                                              .split("Order ")[1],
+                                          paymentMethod: orderDetails[index]
+                                              ["paymentMethod"],
+                                          price: double.parse(
+                                              orderDetails[index]["feedPrice"]
+                                                  .toString()),
+                                          total: double.parse(
+                                              orderDetails[index]["totalPrice"]
+                                                  .toString()),
+                                        )));
+                          } else {
+                            Fluttertoast.showToast(
+                                msg:
+                                    "Cannot edit Orders that are Partially or Already Completed!");
+                          }
+                        },
+                        child: Container(
+                          padding: EdgeInsets.symmetric(
+                              horizontal: 15, vertical: 12),
+                          height: 100,
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(
+                                "${orderDetails[index]["orderNo"]}",
+                                style: bodyText10w600(color: yellow),
+                              ),
+                              Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Text(
+                                    "${orderDetails[index]["feedType"]}",
+                                    style: bodyText15w500(color: black),
+                                  ),
+                                  Text(
+                                    "${orderDetails[index]["totalPrice"]}",
+                                    style: bodyText18w600(color: black),
+                                  ),
+                                ],
+                              ),
+                              Text(
+                                "${orderDetails[index]["originalQuantity"]}",
+                                style: bodyText12w500(color: darkGray),
+                              ),
+                              Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Text(
+                                    "${orderDetails[index]["date"]}",
+                                    style: bodyText12w500(color: darkGray),
+                                  ),
+                                  Text(
+                                    "Order Status: ${orderDetails[index]["orderStatus"]}",
+                                    style: bodyText12w500(color: darkGray),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
                         ),
                       );
                     },

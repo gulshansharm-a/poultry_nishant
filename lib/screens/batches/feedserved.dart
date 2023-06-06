@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 import 'package:poultry_app/screens/batches/addfeedserved.dart';
 import 'package:poultry_app/utils/constants.dart';
 import 'package:poultry_app/widgets/custombutton.dart';
@@ -34,10 +35,36 @@ class _FeedServedPageState extends State<FeedServedPage> {
   ];
 
   List feedServed = [];
+  int noBirds = 0;
+  String breed = "";
+  bool isLoading = true;
   double requirement = 0.0;
   DateTime batchDate = DateTime.utc(1800, 01, 01);
 
+  Future<void> getFeedType() async {
+    setState(() {
+      isLoading = true;
+    });
+    await FirebaseFirestore.instance
+        .collection('users')
+        .doc(FirebaseAuth.instance.currentUser!.uid)
+        .collection("settings")
+        .doc("Feed Type")
+        .get()
+        .then((value) async {
+      if (value.exists) {
+        setState(() {
+          list = value.data()?['feedType'];
+        });
+      }
+    });
+  }
+
   Future<void> getBatchDetails() async {
+    setState(() {
+      isLoading = true;
+      feedServed.clear();
+    });
     await FirebaseFirestore.instance
         .collection('users')
         .doc(widget.owner)
@@ -45,6 +72,12 @@ class _FeedServedPageState extends State<FeedServedPage> {
         .doc(widget.docId)
         .get()
         .then((value) {
+      setState(() {
+        breed = value.data()!["Breed"];
+        noBirds = (int.parse(value.data()!["NoOfBirds"].toString()) -
+            int.parse(value.data()!["Sold"].toString()) -
+            int.parse(value.data()!["Mortality"].toString()));
+      });
       List date = value.data()!["date"].toString().split("/");
       int month = 0;
       int day = int.parse(date[0]);
@@ -90,6 +123,7 @@ class _FeedServedPageState extends State<FeedServedPage> {
       //get individual dates!
       setState(() {
         batchDate = DateTime.utc(year, month, day);
+        print(batchDate);
       });
     });
 
@@ -149,22 +183,75 @@ class _FeedServedPageState extends State<FeedServedPage> {
           int year = int.parse(date[2]);
           DateTime feedDate = DateTime.utc(year, month, day);
 
-          if (feedDate ==
-              DateTime.utc(DateTime.now().year, DateTime.now().month,
-                  DateTime.now().day)) {
-            setState(() {
-              requirement += double.parse(
-                  value.data()!["feedServed"][i]["feedQuantity"].toString());
-            });
-          }
+          print(feedDate);
+          // print(batchDate);
+
+          feedServed.add({
+            "date": DateFormat("dd/MM/yyyy").format(feedDate),
+            "day": feedDate.difference(batchDate).inDays + 1,
+            "feedType": value.data()!["feedServed"][i]["feedType"],
+            "feedServed": value.data()!["feedServed"][i]["feedQuantity"],
+          });
+          
         }
+
+        DateFormat inputFormat = DateFormat("dd/MM/yyyy");
+
+        setState(() {
+          feedServed.sort((first, second) => (inputFormat.parse(first["date"]))
+              .compareTo((inputFormat.parse(second["date"]))));
+        });
       }
     });
+
+    setState(() {
+      isLoading = false;
+    });
+
+    print(feedServed);
   }
 
   void initState() {
     super.initState();
+    getFeedType();
     getBatchDetails();
+    // getTodayFeedRequirement();
+    Fluttertoast.showToast(
+        msg: "Feed served will be entered in Expenses automatically!");
+  }
+
+  Future<void> getTodayFeedRequirement(String feedType) async {
+    await FirebaseFirestore.instance
+        .collection("users")
+        .doc(FirebaseAuth.instance.currentUser!.uid)
+        .collection("settings")
+        .doc("Chick Feed Requirement")
+        .collection(breed)
+        .doc(feedType)
+        .get()
+        .then((value) {
+      if (value.exists) {
+        int day = DateTime.utc(DateTime.now().year, DateTime.now().month,
+                    DateTime.now().day)
+                .difference(batchDate)
+                .inDays +
+            1;
+        double requirementInGrams = 0.0;
+        for (int i = 0; i < value.data()!["dayDetails"].length; i++) {
+          if (int.parse(value.data()!["dayDetails"][i]["day"].toString()) ==
+              day) {
+            requirementInGrams += double.parse(
+                value.data()!["dayDetails"][i]["grams"].toString());
+          }
+        }
+
+        setState(() {
+          requirement = (requirementInGrams * noBirds) / 1000;
+        });
+      } else {
+        Fluttertoast.showToast(msg: "Data for the particulars doesn't exist!");
+      }
+    });
   }
 
   @override
@@ -172,12 +259,21 @@ class _FeedServedPageState extends State<FeedServedPage> {
     return Scaffold(
       floatingActionButton: widget.accessLevel == 0 || widget.accessLevel == 2
           ? FloatedButton(onTap: () {
-              NextScreen(
+              Navigator.push(
                   context,
-                  AddFeedServedPage(
-                    docId: widget.docId,
-                    owner: widget.owner,
-                  ));
+                  MaterialPageRoute(
+                      builder: (context) => AddFeedServedPage(
+                            docId: widget.docId,
+                            owner: widget.owner,
+                          ))).then((value) {
+                if (value == null) {
+                  return;
+                } else {
+                  if (value) {
+                    getBatchDetails();
+                  }
+                }
+              });
             })
           : null,
       appBar: PreferredSize(
@@ -206,10 +302,15 @@ class _FeedServedPageState extends State<FeedServedPage> {
                         hp: 5,
                         dropdownColor: white,
                         bcolor: darkGray,
-                        hint: "All Time",
+                        hint: "Feed Type",
                         height: 30,
                         width: width(context) * .3,
                         list: list,
+                        onchanged: (value) {
+                          if (value != null || value.length != 0) {
+                            getTodayFeedRequirement(value);
+                          }
+                        },
                         textStyle: bodyText12w600(color: darkGray),
                       ),
                       addHorizontalySpace(15),
@@ -230,155 +331,82 @@ class _FeedServedPageState extends State<FeedServedPage> {
             Divider(
               height: 0,
             ),
-            StreamBuilder(
-              stream: FirebaseFirestore.instance
-                  .collection("users")
-                  .doc(widget.owner)
-                  .collection("Batches")
-                  .doc(widget.docId)
-                  .collection("BatchData")
-                  .doc("Feed Served")
-                  .snapshots(),
-              builder: (context, snapshot) {
-                if (!snapshot.hasData ||
-                    batchDate == DateTime.utc(1800, 01, 01) ||
-                    !snapshot.data!.exists) {
-                  if (snapshot.data?.exists == null) {
-                    return CircularProgressIndicator();
-                  } else {
-                    return Center(
-                        child: Text(
-                      "No Feed data",
-                      style: bodyText15w500(color: black),
-                    ));
-                  }
-                } else {
-                  return ListView.separated(
-                      shrinkWrap: true,
-                      physics: NeverScrollableScrollPhysics(),
-                      itemBuilder: (context, index) {
-                        List date = snapshot.data!
-                            .data()!["feedServed"][index]["date"]
-                            .toString()
-                            .split("/");
-                        int day = int.parse(date[0]);
-                        int month = 0;
-                        switch (date[1]) {
-                          case "jan":
-                            month = 1;
-                            break;
-                          case "feb":
-                            month = 2;
-                            break;
-                          case "mar":
-                            month = 3;
-                            break;
-                          case "apr":
-                            month = 4;
-                            break;
-                          case "may":
-                            month = 5;
-                            break;
-                          case "jun":
-                            month = 6;
-                            break;
-                          case "jul":
-                            month = 7;
-                            break;
-                          case "aug":
-                            month = 8;
-                            break;
-                          case "sep":
-                            month = 9;
-                            break;
-                          case "oct":
-                            month = 10;
-                            break;
-                          case "nov":
-                            month = 11;
-                            break;
-                          case "dec":
-                            month = 12;
-                            break;
-                        }
-                        int year = int.parse(date[2]);
-
-                        DateTime feedDate = DateTime.utc(year, month, day);
-
-                        return Container(
-                          padding: EdgeInsets.symmetric(
-                              horizontal: 15, vertical: 12),
-                          height: 70,
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceBetween,
-                                children: [
-                                  Row(
-                                    children: [
-                                      Text(
-                                        DateTime.utc(
-                                                    DateTime.now().year,
-                                                    DateTime.now().month,
-                                                    DateTime.now().day) ==
-                                                feedDate
-                                            ? "${DateFormat("dd/MM/yyyy").format(feedDate)} -- "
-                                            : "${DateFormat("dd/MM/yyyy").format(feedDate)}",
-                                        style:
-                                            bodyText12normal(color: darkGray),
-                                      ),
-                                      DateTime.utc(
-                                                  DateTime.now().year,
-                                                  DateTime.now().month,
-                                                  DateTime.now().day) ==
-                                              feedDate
-                                          ? Text(
-                                              "Today",
-                                              style: bodyText12normal(
-                                                  color: yellow),
-                                            )
-                                          : Container(),
-                                    ],
-                                  ),
-                                  Text(
-                                    "Feed Served: ${snapshot.data!.data()!["feedServed"][index]["feedQuantity"]}KG",
-                                    style: bodyText14normal(color: darkGray),
-                                  )
-                                ],
-                              ),
-                              Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceBetween,
-                                children: [
-                                  Text(
-                                    "Day ${feedDate.difference(batchDate).inDays + 1}",
-                                    style: bodyText17w500(color: black),
-                                  ),
-                                  Text(
-                                    "${snapshot.data!.data()!["feedServed"][index]["feedType"]}",
-                                    style: bodyText14normal(color: darkGray),
-                                  )
-                                ],
-                              )
-                            ],
-                          ),
-                        );
-                      },
-                      separatorBuilder: (context, index) {
-                        return Divider(
-                          height: 0,
-                        );
-                      },
-                      itemCount: snapshot.data!.data()!["feedServed"].length);
-                }
-              },
-            ),
+            ListView.separated(
+                shrinkWrap: true,
+                physics: NeverScrollableScrollPhysics(),
+                itemBuilder: (context, index) {
+                  return Container(
+                    padding: EdgeInsets.symmetric(horizontal: 15, vertical: 12),
+                    height: 70,
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Row(
+                              children: [
+                                Text(
+                                  DateFormat("dd/MM/yyyy").format(DateTime.utc(
+                                              DateTime.now().year,
+                                              DateTime.now().month,
+                                              DateTime.now().day)) ==
+                                          feedServed[index]["date"]
+                                      ? "${feedServed[index]["date"]} -- "
+                                      : "${feedServed[index]["date"]}",
+                                  style: bodyText12normal(color: darkGray),
+                                ),
+                                DateFormat("dd/MM/yyyy").format(DateTime.utc(
+                                            DateTime.now().year,
+                                            DateTime.now().month,
+                                            DateTime.now().day)) ==
+                                        feedServed[index]["date"]
+                                    ? Text(
+                                        "Today",
+                                        style: bodyText12normal(color: yellow),
+                                      )
+                                    : Container(),
+                              ],
+                            ),
+                            Text(
+                              "Feed Served: ${feedServed[index]["feedServed"]} KG",
+                              style: bodyText14normal(color: darkGray),
+                            )
+                          ],
+                        ),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              "Day ${feedServed[index]["day"]}",
+                              style: bodyText17w500(color: black),
+                            ),
+                            Text(
+                              "${feedServed[index]["feedType"]}",
+                              style: bodyText14normal(color: darkGray),
+                            )
+                          ],
+                        )
+                      ],
+                    ),
+                  );
+                },
+                separatorBuilder: (context, index) {
+                  return Divider(
+                    height: 0,
+                  );
+                },
+                itemCount: feedServed.length),
             Divider(
               height: 0,
             ),
-            addVerticalSpace(20)
+            addVerticalSpace(20),
+            Center(
+              child: Text(
+                "Feed served will be added to expenses automatically!",
+                style: bodyText14w500(color: darkGray),
+              ),
+            ),
           ],
         ),
       ),

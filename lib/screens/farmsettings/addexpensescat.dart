@@ -76,6 +76,7 @@ class AddExpensesCategoryState extends State<AddExpensesCategory> {
 
                         Fluttertoast.showToast(msg: "Added Successfully!");
                         Navigator.pop(context, true);
+                        
                       }
                     })
               ],

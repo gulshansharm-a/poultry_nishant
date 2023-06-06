@@ -3,6 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:poultry_app/screens/batches/addmedicine.dart';
 import 'package:poultry_app/screens/batches/batches.dart';
+import 'package:poultry_app/screens/farmsettings/userinfo.dart';
 import 'package:poultry_app/utils/constants.dart';
 import 'package:poultry_app/widgets/floatbutton.dart';
 import 'package:poultry_app/widgets/generalappbar.dart';
@@ -23,9 +24,16 @@ class MedicinePage extends StatefulWidget {
 
 class MyMedicinePageState extends State<MedicinePage> {
   List medicineDetails = [];
+  List editDetails = [];
   DateTime batchDate = DateTime.utc(1800, 01, 01);
+  bool isLoading = true;
 
   Future<void> getBatchDetails() async {
+    setState(() {
+      isLoading = true;
+      medicineDetails.clear();
+      editDetails.clear();
+    });
     await FirebaseFirestore.instance
         .collection('users')
         .doc(widget.owner)
@@ -82,73 +90,198 @@ class MyMedicinePageState extends State<MedicinePage> {
       });
     });
 
-    // await FirebaseFirestore.instance
-    //     .collection('users')
-    //     .doc(widget.owner)
-    //     .collection('Batches')
-    //     .doc(batchDocIds[widget.index])
-    //     .collection("BatchData")
-    //     .doc("Medicine")
-    //     .get()
-    //     .then((value) {
-    //   if (!value.exists) {
-    //   } else {
-    //     for (int i = 0; i < value.data()?["medicineDetails"]!.length; i++) {
-    //       List dates =
-    //           value.data()!["medicineDetails"][i]["date"].toString().split("/");
-    //       int month = 0;
-    //       int day = int.parse(dates[0]);
-    //       switch (dates[1]) {
-    //         case "jan":
-    //           month = 1;
-    //           break;
-    //         case "feb":
-    //           month = 2;
-    //           break;
-    //         case "mar":
-    //           month = 3;
-    //           break;
-    //         case "apr":
-    //           month = 4;
-    //           break;
-    //         case "may":
-    //           month = 5;
-    //           break;
-    //         case "jun":
-    //           month = 6;
-    //           break;
-    //         case "jul":
-    //           month = 7;
-    //           break;
-    //         case "aug":
-    //           month = 8;
-    //           break;
-    //         case "sep":
-    //           month = 9;
-    //           break;
-    //         case "oct":
-    //           month = 10;
-    //           break;
-    //         case "nov":
-    //           month = 11;
-    //           break;
-    //         case "dec":
-    //           month = 12;
-    //           break;
-    //       }
-    //       int year = int.parse(dates[2]);
-    //       DateTime medicineDate = DateTime.utc(year, month, day);
-    //       setState(() {
-    //         medicineDetails.add({
-    //           "date": DateFormat("dd/MM/yyyy").format(medicineDate),
-    //           "day": medicineDate.difference(batchDate).inDays + 1,
-    //           "medicine":
-    //               value.data()!["medicineDetails"][i]["Medicine"].toString(),
-    //         });
-    //       });
-    //     }
-    //   }
-    // });
+    await FirebaseFirestore.instance
+        .collection('users')
+        .doc(widget.owner)
+        .collection('Batches')
+        .doc(batchDocIds[widget.index])
+        .collection("BatchData")
+        .doc("Medicine")
+        .get()
+        .then((value) {
+      if (!value.exists) {
+      } else {
+        for (int i = 0; i < value.data()?["medicineDetails"]!.length; i++) {
+          List dates =
+              value.data()!["medicineDetails"][i]["date"].toString().split("/");
+          int month = 0;
+          int day = int.parse(dates[0]);
+          switch (dates[1]) {
+            case "jan":
+              month = 1;
+              break;
+            case "feb":
+              month = 2;
+              break;
+            case "mar":
+              month = 3;
+              break;
+            case "apr":
+              month = 4;
+              break;
+            case "may":
+              month = 5;
+              break;
+            case "jun":
+              month = 6;
+              break;
+            case "jul":
+              month = 7;
+              break;
+            case "aug":
+              month = 8;
+              break;
+            case "sep":
+              month = 9;
+              break;
+            case "oct":
+              month = 10;
+              break;
+            case "nov":
+              month = 11;
+              break;
+            case "dec":
+              month = 12;
+              break;
+          }
+          int year = int.parse(dates[2]);
+          DateTime medicineDate = DateTime.utc(year, month, day);
+          setState(() {
+            medicineDetails.add({
+              "date": DateFormat("dd/MM/yyyy").format(medicineDate),
+              "day": medicineDate.difference(batchDate).inDays + 1,
+              "medicine":
+                  value.data()!["medicineDetails"][i]["Medicine"].toString(),
+              "description":
+                  value.data()!["medicineDetails"][i]["Description"].toString(),
+            });
+
+            editDetails.add({
+              "Description": value.data()!["medicineDetails"][i]["Description"],
+              "Medicine":
+                  value.data()!["medicineDetails"][i]["Medicine"].toString(),
+              "date": value.data()!["medicineDetails"][i]["date"].toString(),
+            });
+          });
+        }
+        DateFormat inputFormat = DateFormat("dd/MM/yyyy");
+
+        setState(() {
+          medicineDetails.sort((first, second) =>
+              (inputFormat.parse(first["date"]))
+                  .compareTo((inputFormat.parse(second["date"]))));
+
+          editDetails.sort((first, second) {
+            String date1 = first["date"];
+            String date2 = second["date"];
+            DateTime dateTime1 = DateTime.now(), dateTime2 = DateTime.now();
+
+            List date = date1.toString().split("/");
+            int month = 0;
+            int day = int.parse(date[0]);
+            switch (date[1]) {
+              case "jan":
+                month = 1;
+                break;
+              case "feb":
+                month = 2;
+                break;
+              case "mar":
+                month = 3;
+                break;
+              case "apr":
+                month = 4;
+                break;
+              case "may":
+                month = 5;
+                break;
+              case "jun":
+                month = 6;
+                break;
+              case "jul":
+                month = 7;
+                break;
+              case "aug":
+                month = 8;
+                break;
+              case "sep":
+                month = 9;
+                break;
+              case "oct":
+                month = 10;
+                break;
+              case "nov":
+                month = 11;
+                break;
+              case "dec":
+                month = 12;
+                break;
+            }
+            int year = int.parse(date[2]);
+
+            setState(() {
+              dateTime1 = inputFormat
+                  .parse(inputFormat.format(DateTime.utc(year, month, day)));
+            });
+
+            date = date2.toString().split("/");
+            month = 0;
+            day = int.parse(date[0]);
+            switch (date[1]) {
+              case "jan":
+                month = 1;
+                break;
+              case "feb":
+                month = 2;
+                break;
+              case "mar":
+                month = 3;
+                break;
+              case "apr":
+                month = 4;
+                break;
+              case "may":
+                month = 5;
+                break;
+              case "jun":
+                month = 6;
+                break;
+              case "jul":
+                month = 7;
+                break;
+              case "aug":
+                month = 8;
+                break;
+              case "sep":
+                month = 9;
+                break;
+              case "oct":
+                month = 10;
+                break;
+              case "nov":
+                month = 11;
+                break;
+              case "dec":
+                month = 12;
+                break;
+            }
+            year = int.parse(date[2]);
+
+            setState(() {
+              dateTime2 = inputFormat
+                  .parse(inputFormat.format(DateTime.utc(year, month, day)));
+            });
+
+            return (dateTime1).compareTo(dateTime2);
+          });
+        });
+        print(medicineDetails);
+        print(editDetails);
+      }
+    });
+    setState(() {
+      isLoading = false;
+    });
   }
 
   void initState() {
@@ -161,10 +294,20 @@ class MyMedicinePageState extends State<MedicinePage> {
     return Scaffold(
       floatingActionButton: widget.accessLevel == 0 || widget.accessLevel == 2
           ? FloatedButton(onTap: () {
-              NextScreen(
+              Navigator.push(
                   context,
-                  AddMedicinePage(
-                      batchId: batchDocIds[widget.index], owner: widget.owner));
+                  MaterialPageRoute(
+                      builder: (context) => AddMedicinePage(
+                          batchId: batchDocIds[widget.index],
+                          owner: widget.owner))).then((value) {
+                if (value == null) {
+                  return;
+                } else {
+                  if (value) {
+                    getBatchDetails();
+                  }
+                }
+              });
             })
           : null,
       appBar: PreferredSize(
@@ -185,122 +328,78 @@ class MyMedicinePageState extends State<MedicinePage> {
           Divider(
             height: 0,
           ),
-          StreamBuilder(
-              stream: FirebaseFirestore.instance
-                  .collection('users')
-                  .doc(widget.owner)
-                  .collection('Batches')
-                  .doc(batchDocIds[widget.index])
-                  .collection("BatchData")
-                  .doc("Medicine")
-                  .snapshots(),
-              builder: (context, snapshot) {
-                print(snapshot.hasData);
-
-                if (!snapshot.hasData ||
-                    !snapshot.data!.exists ||
-                    batchDate == DateTime.utc(1800, 01, 01)) {
-                  if (snapshot.data?.exists == null) {
-                    return CircularProgressIndicator();
-                  } else {
-                    return Center(
-                        child: Text(
-                      "No Medicine data",
-                      style: bodyText15w500(color: black),
-                    ));
-                  }
-                } else {
-                  return ListView.separated(
-                      shrinkWrap: true,
-                      physics: NeverScrollableScrollPhysics(),
-                      itemBuilder: (context, index) {
-                        List dates = snapshot.data!
-                            .data()!["medicineDetails"][index]["date"]
-                            .toString()
-                            .split("/");
-                        int month = 0;
-                        int day = int.parse(dates[0]);
-                        switch (dates[1]) {
-                          case "jan":
-                            month = 1;
-                            break;
-                          case "feb":
-                            month = 2;
-                            break;
-                          case "mar":
-                            month = 3;
-                            break;
-                          case "apr":
-                            month = 4;
-                            break;
-                          case "may":
-                            month = 5;
-                            break;
-                          case "jun":
-                            month = 6;
-                            break;
-                          case "jul":
-                            month = 7;
-                            break;
-                          case "aug":
-                            month = 8;
-                            break;
-                          case "sep":
-                            month = 9;
-                            break;
-                          case "oct":
-                            month = 10;
-                            break;
-                          case "nov":
-                            month = 11;
-                            break;
-                          case "dec":
-                            month = 12;
-                            break;
-                        }
-                        int year = int.parse(dates[2]);
-                        DateTime medicineDate = DateTime.utc(year, month, day);
-                        return Container(
-                          padding: EdgeInsets.symmetric(
-                              horizontal: 15, vertical: 12),
-                          height: 70,
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                DateFormat("dd/MM/yyyy").format(medicineDate),
-                                style: bodyText12normal(color: darkGray),
+          isLoading
+              ? CircularProgressIndicator()
+              : ListView.separated(
+                  shrinkWrap: true,
+                  physics: NeverScrollableScrollPhysics(),
+                  itemBuilder: (context, index) {
+                    return InkWell(
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => AddMedicinePage(
+                              batchId: batchDocIds[widget.index],
+                              owner: widget.owner,
+                              isEdit: true,
+                              date: medicineDetails[index]["date"],
+                              description: medicineDetails[index]
+                                  ["description"],
+                              medicine: medicineDetails[index]["medicine"],
+                              batchIndex: index,
+                              upto: editDetails.sublist(0, index),
+                              after: editDetails.sublist(
+                                index + 1,
                               ),
-                              Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceBetween,
-                                children: [
-                                  Text(
-                                    "Day ${medicineDate.difference(batchDate).inDays + 1}",
-                                    style: bodyText17w500(color: black),
-                                  ),
-                                  Text(
-                                    snapshot.data!.data()!["medicineDetails"]
-                                        [index]["Medicine"],
-                                    style: bodyText14normal(color: darkGray),
-                                  )
-                                ],
-                              )
-                            ],
+                            ),
                           ),
-                        );
+                        ).then((value) {
+                          if (value == null) {
+                            return;
+                          } else {
+                            if (value) {
+                              getBatchDetails();
+                            }
+                          }
+                        });
                       },
-                      separatorBuilder: (context, index) {
-                        return Divider(
-                          height: 0,
-                        );
-                      },
-                      itemCount:
-                          (snapshot.data!.data()!["medicineDetails"] ?? [])
-                              .length);
-                }
-              }),
+                      child: Container(
+                        padding:
+                            EdgeInsets.symmetric(horizontal: 15, vertical: 12),
+                        height: 70,
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              medicineDetails[index]["date"],
+                              style: bodyText12normal(color: darkGray),
+                            ),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Text(
+                                  "Day ${medicineDetails[index]["day"]}",
+                                  style: bodyText17w500(color: black),
+                                ),
+                                Text(
+                                  medicineDetails[index]["medicine"],
+                                  style: bodyText14normal(color: darkGray),
+                                )
+                              ],
+                            )
+                          ],
+                        ),
+                      ),
+                    );
+                  },
+                  separatorBuilder: (context, index) {
+                    return Divider(
+                      height: 0,
+                    );
+                  },
+                  itemCount: medicineDetails.length),
           Divider(
             height: 0,
           ),

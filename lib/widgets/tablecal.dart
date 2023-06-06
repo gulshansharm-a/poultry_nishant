@@ -22,7 +22,6 @@ class ShowCalendar extends StatefulWidget {
 class _ShowCalendarState extends State<ShowCalendar> {
   String currentDate = DateFormat('dd/MMM/yyyy').format(DateTime.now());
 
-
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
@@ -48,35 +47,41 @@ class _ShowCalendarState extends State<ShowCalendar> {
           lastDay: DateTime.utc(2030, 3, 14),
           focusedDay: DateTime.now(),
           onDaySelected: (selectedDay, focusedDay) {
-            setState(() {
-              if (widget.canSelectBefore) {
-                currentDate = DateFormat('dd/MMM/yyyy').format(selectedDay);
-                widget.controller.text = currentDate.toLowerCase();
-                goBack(context);
-              } else {
-                if (widget.cannotSelectBefore != null) {
-                  if (selectedDay.isBefore(widget.cannotSelectBefore!) &&
-                      !(DateUtils.isSameDay(
-                          selectedDay, widget.cannotSelectBefore))) {
-                    Fluttertoast.showToast(msg: 'Cannot choose before date!');
-                  } else {
-                    currentDate = DateFormat('dd/MMM/yyyy').format(selectedDay);
-                    widget.controller.text = currentDate.toLowerCase();
-                    goBack(context);
-                  }
+            if (selectedDay.isAfter(DateTime.now())) {
+              Fluttertoast.showToast(msg: "Cannot select future date!");
+            } else {
+              setState(() {
+                if (widget.canSelectBefore) {
+                  currentDate = DateFormat('dd/MMM/yyyy').format(selectedDay);
+                  widget.controller.text = currentDate.toLowerCase();
+                  goBack(context);
                 } else {
-                  //if cannotSelectBefore is null!
-                  if (selectedDay.isBefore(DateTime.now()) &&
-                      !(DateUtils.isSameDay(selectedDay, DateTime.now()))) {
-                    Fluttertoast.showToast(msg: 'Cannot choose before date!');
+                  if (widget.cannotSelectBefore != null) {
+                    if (selectedDay.isBefore(widget.cannotSelectBefore!) &&
+                        !(DateUtils.isSameDay(
+                            selectedDay, widget.cannotSelectBefore))) {
+                      Fluttertoast.showToast(msg: 'Cannot choose before date!');
+                    } else {
+                      currentDate =
+                          DateFormat('dd/MMM/yyyy').format(selectedDay);
+                      widget.controller.text = currentDate.toLowerCase();
+                      goBack(context);
+                    }
                   } else {
-                    currentDate = DateFormat('dd/MMM/yyyy').format(selectedDay);
-                    widget.controller.text = currentDate.toLowerCase();
-                    goBack(context);
+                    //if cannotSelectBefore is null!
+                    if (selectedDay.isBefore(DateTime.now()) &&
+                        !(DateUtils.isSameDay(selectedDay, DateTime.now()))) {
+                      Fluttertoast.showToast(msg: 'Cannot choose before date!');
+                    } else {
+                      currentDate =
+                          DateFormat('dd/MMM/yyyy').format(selectedDay);
+                      widget.controller.text = currentDate.toLowerCase();
+                      goBack(context);
+                    }
                   }
                 }
-              }
-            });
+              });
+            }
           },
           // selectedDayPredicate: (day) {
           //   return isSameDay(dateTime, day);

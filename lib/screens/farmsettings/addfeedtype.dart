@@ -54,7 +54,7 @@ class AddFeedType extends StatelessWidget {
                       }, SetOptions(merge: true)).then(
                         (value) {
                           Fluttertoast.showToast(msg: "Successfully added!");
-                          Navigator.of(context).pop();
+                          Navigator.pop(context, true);
                         },
                       );
                     })

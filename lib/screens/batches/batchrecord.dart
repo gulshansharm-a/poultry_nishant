@@ -423,7 +423,7 @@ class _BatchRecordPageState extends State<BatchRecordPage> {
                                               builder: (ctx) => NewBatch(
                                                     title: 'Edit Batch',
                                                     isEdit: true,
-                                                    owner: owner, 
+                                                    owner: owner,
                                                     docId: batchDocIds[
                                                         widget.index],
                                                   )));
@@ -446,9 +446,14 @@ class _BatchRecordPageState extends State<BatchRecordPage> {
                             )
                           ],
                         ),
-                        Text(
-                          "${details[widget.index]["weeks"]} weeks: ${details[widget.index]["days"]} days",
-                          style: bodyText14normal(color: darkGray),
+                        Padding(
+                          padding: EdgeInsets.only(
+                            bottom: 8.0,
+                          ),
+                          child: Text(
+                            "${details[widget.index]["weeks"]} weeks: ${details[widget.index]["days"]} days",
+                            style: bodyText14normal(color: darkGray),
+                          ),
                         ),
                         Padding(
                           padding: const EdgeInsets.only(right: 12),

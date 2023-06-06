@@ -112,7 +112,11 @@ class _BatchPageState extends State<BatchPage> with TickerProviderStateMixin {
                 if (differenceDays < 0) {
                   setState(() {
                     details.add(
-                      {"weeks": 0, "days": 0},
+                      {
+                        "weeks": 0,
+                        "days": 0,
+                        "type": value["Breed"].toString()
+                      },
                     );
                   });
                 } else {
@@ -120,7 +124,8 @@ class _BatchPageState extends State<BatchPage> with TickerProviderStateMixin {
                     details.add(
                       {
                         "weeks": differenceDays ~/ 7,
-                        "days": differenceDays % 7
+                        "days": differenceDays % 7,
+                        "type": value["Breed"].toString(),
                       },
                     );
                   });
@@ -159,6 +164,7 @@ class _BatchPageState extends State<BatchPage> with TickerProviderStateMixin {
         .collection("Batches")
         .get()
         .then((value) {
+      // int detailIndex = 0;
       for (var doc in value.docs) {
         //bname = doc.get("BatchName").toString();
         // getDateInformation();
@@ -218,16 +224,26 @@ class _BatchPageState extends State<BatchPage> with TickerProviderStateMixin {
           if (differenceDays < 0) {
             setState(() {
               details.add(
-                {"weeks": 0, "days": 0},
+                {"weeks": 0, "days": 0, "type": doc.get("Breed").toString()},
               );
             });
           } else {
             setState(() {
               details.add(
-                {"weeks": differenceDays ~/ 7, "days": differenceDays % 7},
+                {
+                  "weeks": differenceDays ~/ 7,
+                  "days": differenceDays % 7,
+                  "type": doc.get("Breed").toString()
+                },
               );
             });
           }
+
+          print(details);
+          // setState(() {
+          //   print(doc.get("Breed").toString());
+          //   detailIndex += 1;
+          // });
         }
       }
       print(batchDocIds);
@@ -396,7 +412,11 @@ class _BatchPageState extends State<BatchPage> with TickerProviderStateMixin {
                                 leading: CircleAvatar(
                                   radius: 25,
                                   backgroundColor: yellow,
-                                  child: Image.asset("assets/images/henI.png"),
+                                  child: details[index]["type"] == "Layer" ||
+                                          details[index]["type"] ==
+                                              "Breeder Farm"
+                                      ? Image.asset("assets/images/eggI.png")
+                                      : Image.asset("assets/images/henI.png"),
                                 ),
                                 title: Text(
                                   batchName[index],

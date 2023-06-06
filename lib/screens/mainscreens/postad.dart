@@ -1,11 +1,13 @@
 import 'dart:io';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:csc_picker/csc_picker.dart';
 import 'package:dotted_border/dotted_border.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:poultry_app/screens/farmsettings/userinfo.dart';
 import 'package:poultry_app/utils/constants.dart';
 import 'package:poultry_app/widgets/custombutton.dart';
 import 'package:poultry_app/widgets/customdropdown.dart';
@@ -33,6 +35,9 @@ class _PostAdPageState extends State<PostAdPage> {
   List list = ["lorem ipsum", "lorem ipsum", "lorem ipsum", "lorem ipsum"];
   XFile? imagePicked;
   String posterName = "";
+  String country = "";
+  String village = "";
+  String state = "";
 
   void initState() {
     getPosterDetails();
@@ -164,49 +169,91 @@ class _PostAdPageState extends State<PostAdPage> {
                     return null;
                   },
                 ),
+                addVerticalSpace(10),
+                CSCPicker(
+                  dropdownDecoration: BoxDecoration(
+                    color: Color.fromRGBO(232, 236, 244, 1),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  selectedItemStyle: bodyText15normal(color: black),
+                  dropdownItemStyle: bodyText15normal(color: black),
+                  searchBarRadius: 15,
+                  defaultCountry: CscCountry.India,
+                  onCountryChanged: (value) {
+                    setState(() {
+                      country = value;
+                    });
+                  },
+                  onStateChanged: (value) {
+                    setState(() {
+                      state = value ?? "";
+                    });
+                  },
+                  onCityChanged: (value) {
+                    setState(() {
+                      city = value ?? "";
+                    });
+                  },
+                ),
+                addVerticalSpace(10),
+                // CustomTextField(
+                //     hintText: "State",
+                //     controller: stateController,
+                //     validator: (value) {
+                //       if (value == null || value.trim().length == 0) {
+                //         return 'Enter State';
+                //       }
+                //       return null;
+                //     }),
+                // Row(
+                //   children: [
+                //     Expanded(
+                //       child: CustomTextField(
+                //           hintText: "City",
+                //           controller: cityController,
+                //           validator: (value) {
+                //             if (value == null || value.trim().length == 0) {
+                //               return 'Enter City';
+                //             }
+                //             return null;
+                //           }),
+                //     ),
+                addHorizontalySpace(20),
                 CustomTextField(
-                    hintText: "State",
-                    controller: stateController,
+                    hintText: "Village",
+                    controller: villageController,
                     validator: (value) {
                       if (value == null || value.trim().length == 0) {
-                        return 'Enter State';
+                        return 'Enter Village';
                       }
                       return null;
                     }),
-                Row(
-                  children: [
-                    Expanded(
-                      child: CustomTextField(
-                          hintText: "City",
-                          controller: cityController,
-                          validator: (value) {
-                            if (value == null || value.trim().length == 0) {
-                              return 'Enter City';
-                            }
-                            return null;
-                          }),
-                    ),
-                    addHorizontalySpace(20),
-                    Expanded(
-                      child: CustomTextField(
-                          hintText: "Village",
-                          controller: villageController,
-                          validator: (value) {
-                            if (value == null || value.trim().length == 0) {
-                              return 'Enter Village';
-                            }
-                            return null;
-                          }),
-                    )
-                  ],
-                ),
+
                 CustomTextField(
                   hintText: "Description",
                   controller: descriptionController,
                 ),
+
                 CustomButton(
                     text: "Post",
                     onClick: () async {
+                      print(state);
+                      print(country);
+                      print(city);
+                      print({
+                        "contact": contactController.text.toString(),
+                        "quantity":
+                            int.parse(quantityController.text.toString()),
+                        "city": city,
+                        "village": villageController.text.toString(),
+                        "country": country,
+                        "state": state,
+                        "description": descriptionController.text.toString(),
+                        "imageUrl": null,
+                        "date": DateFormat("dd/MM/yyyy").format(DateTime.now()),
+                        "type": widget.title,
+                      });
+
                       if (_formKey.currentState!.validate()) {
                         //first upload image to storage if any!
 
@@ -221,8 +268,10 @@ class _PostAdPageState extends State<PostAdPage> {
                                   "contact": contactController.text.toString(),
                                   "quantity": int.parse(
                                       quantityController.text.toString()),
-                                  "city": cityController.text.toString(),
+                                  "city": city,
                                   "village": villageController.text.toString(),
+                                  "country": country,
+                                  "state": state,
                                   "description":
                                       descriptionController.text.toString(),
                                   "imageUrl": null,
@@ -257,8 +306,9 @@ class _PostAdPageState extends State<PostAdPage> {
                                         contactController.text.toString(),
                                     "quantity": int.parse(
                                         quantityController.text.toString()),
-                                    "state": stateController.text.toString(),
-                                    "city": cityController.text.toString(),
+                                    "state": state,
+                                    "city": city,
+                                    "country": country,
                                     "village":
                                         villageController.text.toString(),
                                     "imageUrl": downloadUrl,

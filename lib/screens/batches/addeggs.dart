@@ -12,7 +12,30 @@ import 'package:intl/intl.dart';
 class AddEggsPage extends StatefulWidget {
   String owner;
   String batchId;
-  AddEggsPage({super.key, required this.batchId, required this.owner});
+  int? batchIndex;
+  bool? isEdit = false;
+  String? date;
+  int? totalEggs;
+  int? pulletEggs;
+  int? brokenEggs;
+  String? description;
+  List? upto;
+  List? after;
+
+  AddEggsPage({
+    super.key,
+    required this.batchId,
+    required this.owner,
+    this.batchIndex,
+    this.isEdit,
+    this.totalEggs,
+    this.pulletEggs,
+    this.brokenEggs,
+    this.description,
+    this.date,
+    this.upto,
+    this.after,
+  });
 
   @override
   State<AddEggsPage> createState() => _AddEggsPageState();
@@ -91,6 +114,17 @@ class _AddEggsPageState extends State<AddEggsPage> {
 
   void initState() {
     super.initState();
+    if (widget.isEdit == true) {
+      setState(() {
+        dateController.text = DateFormat("dd/MMM/yyyy")
+            .format(DateFormat("dd/MM/yyyy").parse(widget.date!))
+            .toLowerCase();
+        eggTrayCollectionController.text = widget.totalEggs.toString();
+        pulletEggsController.text = widget.pulletEggs.toString();
+        brokenController.text = widget.brokenEggs.toString();
+        descriptionController.text = widget.description.toString();
+      });
+    }
     getDateDetails();
   }
 
@@ -187,87 +221,171 @@ class _AddEggsPageState extends State<AddEggsPage> {
                     onClick: () async {
                       //check first if today's feed exists!
 
-                      await FirebaseFirestore.instance
-                          .collection("users")
-                          .doc(widget.owner)
-                          .collection("Batches")
-                          .doc(widget.batchId)
-                          .collection("BatchData")
-                          .doc("Feed Served")
-                          .get()
-                          .then((value) async {
-                        //find total feed served for today!
-                        double feedCostToday = 0.0;
-                        double costPerEgg = 0.0;
-                        bool doesContain = false;
-                        if (value.exists) {
-                          for (int i = 0;
-                              i < value.data()!["feedServed"].length;
-                              i++) {
-                            if (value.data()!["feedServed"][i]["date"] ==
-                                DateFormat("dd/MMM/yyyy")
-                                    .format(DateTime.now())
-                                    .toLowerCase()) {
+                      if (widget.isEdit == true) {
+                        Map current = {};
+
+                        await FirebaseFirestore.instance
+                            .collection("users")
+                            .doc(widget.owner)
+                            .collection("Batches")
+                            .doc(widget.batchId)
+                            .collection("BatchData")
+                            .doc("Feed Served")
+                            .get()
+                            .then((value) async {
+                          //find total feed served for today!
+                          double feedCostToday = 0.0;
+                          double costPerEgg = 0.0;
+                          bool doesContain = false;
+                          if (value.exists) {
+                            for (int i = 0;
+                                i < value.data()!["feedServed"].length;
+                                i++) {
+                              if (value.data()!["feedServed"][i]["date"] ==
+                                  dateController.text.toString()) {
+                                setState(() {
+                                  doesContain = true;
+                                });
+
+                                setState(() {
+                                  feedCostToday += (double.parse(value
+                                          .data()!["feedServed"][i]
+                                              ["priceForFeed"]
+                                          .toString())) *
+                                      (double.parse(value
+                                          .data()!["feedServed"][i]
+                                              ["feedQuantity"]
+                                          .toString()));
+                                });
+                              }
+                            }
+
+                            if (doesContain) {
                               setState(() {
-                                doesContain = true;
+                                costPerEgg = feedCostToday /
+                                    (int.parse(eggTrayCollectionController.text
+                                        .toString()));
+                              });
+                              current.addAll({
+                                "date": dateController.text.toString(),
+                                'EggTrayCollection': int.parse(
+                                    eggTrayCollectionController.text
+                                        .toString()),
+                                'PulletEggs': int.parse(
+                                    pulletEggsController.text.toString()),
+                                'Broken':
+                                    int.parse(brokenController.text.toString()),
+                                'Description':
+                                    descriptionController.text.toString(),
+                                "costPerEgg": costPerEgg,
                               });
 
-                              setState(() {
-                                feedCostToday += double.parse(value
-                                    .data()!["feedServed"][i]["priceForFeed"]
-                                    .toString());
+                              await FirebaseFirestore.instance
+                                  .collection('users')
+                                  .doc(widget.owner)
+                                  .collection("Batches")
+                                  .doc(widget.batchId)
+                                  .collection("BatchData")
+                                  .doc("Eggs")
+                                  .set({
+                                "eggDetails":
+                                    widget.upto! + [current] + widget.after!,
                               });
+                              Fluttertoast.showToast(
+                                  msg: "Data updated successfully!");
+                              Navigator.pop(context, true);
+                            } else {
+                              Fluttertoast.showToast(
+                                  msg: "Feed data doesn't exist for that day!");
                             }
                           }
+                        });
+                      } else {
+                        await FirebaseFirestore.instance
+                            .collection("users")
+                            .doc(widget.owner)
+                            .collection("Batches")
+                            .doc(widget.batchId)
+                            .collection("BatchData")
+                            .doc("Feed Served")
+                            .get()
+                            .then((value) async {
+                          //find total feed served for today!
+                          double feedCostToday = 0.0;
+                          double costPerEgg = 0.0;
+                          bool doesContain = false;
+                          if (value.exists) {
+                            for (int i = 0;
+                                i < value.data()!["feedServed"].length;
+                                i++) {
+                              if (value.data()!["feedServed"][i]["date"] ==
+                                  dateController.text.toString()) {
+                                setState(() {
+                                  doesContain = true;
+                                });
 
-                          if (doesContain) {
-                            setState(() {
-                              costPerEgg = feedCostToday /
-                                  (int.parse(eggTrayCollectionController.text
-                                      .toString()));
-                            });
-                            await FirebaseFirestore.instance
-                                .collection('users')
-                                .doc(widget.owner)
-                                .collection("Batches")
-                                .doc(widget.batchId)
-                                .collection("BatchData")
-                                .doc("Eggs")
-                                .set({
-                              "eggDetails": FieldValue.arrayUnion([
-                                {
-                                  "date": dateController.text.toString(),
-                                  'EggTrayCollection': int.parse(
-                                      eggTrayCollectionController.text
-                                          .toString()),
-                                  'PulletEggs': int.parse(
-                                      pulletEggsController.text.toString()),
-                                  'Broken': int.parse(
-                                      brokenController.text.toString()),
-                                  'Description':
-                                      descriptionController.text.toString(),
-                                  "costPerEgg": costPerEgg,
-                                }
-                              ])
-                            }, SetOptions(merge: true));
+                                setState(() {
+                                  feedCostToday += (double.parse(value
+                                          .data()!["feedServed"][i]
+                                              ["priceForFeed"]
+                                          .toString())) *
+                                      (double.parse(value
+                                          .data()!["feedServed"][i]
+                                              ["feedQuantity"]
+                                          .toString()));
+                                });
+                              }
+                            }
 
-                            if (_formKey.currentState!.validate()) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                    content: Text('Processing Data')),
-                              );
+                            if (doesContain) {
+                              setState(() {
+                                costPerEgg = feedCostToday /
+                                    (int.parse(eggTrayCollectionController.text
+                                        .toString()));
+                              });
+                              await FirebaseFirestore.instance
+                                  .collection('users')
+                                  .doc(widget.owner)
+                                  .collection("Batches")
+                                  .doc(widget.batchId)
+                                  .collection("BatchData")
+                                  .doc("Eggs")
+                                  .set({
+                                "eggDetails": FieldValue.arrayUnion([
+                                  {
+                                    "date": dateController.text.toString(),
+                                    'EggTrayCollection': int.parse(
+                                        eggTrayCollectionController.text
+                                            .toString()),
+                                    'PulletEggs': int.parse(
+                                        pulletEggsController.text.toString()),
+                                    'Broken': int.parse(
+                                        brokenController.text.toString()),
+                                    'Description':
+                                        descriptionController.text.toString(),
+                                    "costPerEgg": costPerEgg,
+                                  }
+                                ])
+                              }, SetOptions(merge: true));
 
-                              Navigator.of(context).pop();
+                              if (_formKey.currentState!.validate()) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                      content: Text('Processing Data')),
+                                );
+
+                                Navigator.pop(context, true);
+                              }
+                            } else {
+                              Fluttertoast.showToast(
+                                  msg: "Enter feed for today!");
                             }
                           } else {
                             Fluttertoast.showToast(
-                                msg: "Enter feed for today!");
+                                msg: "Add Feed Served Details first!");
                           }
-                        } else {
-                          Fluttertoast.showToast(
-                              msg: "Add Feed Served Details first!");
-                        }
-                      });
+                        });
+                      }
                     },
                     width: width(context),
                     height: 55),

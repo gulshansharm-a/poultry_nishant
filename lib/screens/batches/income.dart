@@ -11,6 +11,7 @@ import 'package:poultry_app/widgets/floatbutton.dart';
 import 'package:poultry_app/widgets/generalappbar.dart';
 import 'package:poultry_app/widgets/navigation.dart';
 import 'package:poultry_app/widgets/searchbox.dart';
+import 'package:intl/intl.dart';
 
 import 'addeggs.dart';
 import 'batchrecord.dart';
@@ -32,8 +33,16 @@ class IncomePage extends StatefulWidget {
 
 class _IncomePageState extends State<IncomePage> {
   List incomeDetails = [];
+  bool isLoading = true;
 
   Future<void> getIncomeDetails() async {
+    setState(() {
+      isLoading = true;
+      incomeDetails.clear();
+    });
+
+    // DateFormat inputFormat = DateFormat("dd/MMM/yyyy");
+
     await FirebaseFirestore.instance
         .collection('users')
         .doc(widget.owner)
@@ -47,21 +56,45 @@ class _IncomePageState extends State<IncomePage> {
         setState(() {
           for (int i = 0; i < value.data()!["incomeDetails"].length; i++) {
             incomeDetails.add({
-              "billAmount": value.data()!["incomeDetails"][i]["BillAmount"],
+              "BillAmount": value.data()!["incomeDetails"][i]["BillAmount"],
               "date": value.data()!["incomeDetails"][i]["date"],
               "name": value.data()!["incomeDetails"][i]["name"],
-              "incomeCategory": value.data()!["incomeDetails"][i]
+              "IncomeCategory": value.data()!["incomeDetails"][i]
                   ["IncomeCategory"],
-              "billDue": double.parse(
+              "AmountDue": double.parse(
                   value.data()!["incomeDetails"][i]["AmountDue"].toString()),
+              "Contact": value.data()!["incomeDetails"][i]["Contact"],
+              "Weight": double.parse(
+                  value.data()!["incomeDetails"][i]["Weight"].toString()),
+              "Rate": double.parse(
+                  value.data()!["incomeDetails"][i]["Rate"].toString()),
+              "Quantity": int.parse(
+                  value.data()!["incomeDetails"][i]["Quantity"].toString()),
+              "PaymentMethod": value.data()!["incomeDetails"][i]
+                  ["PaymentMethod"],
+              "AmountPaid": double.parse(
+                  value.data()!["incomeDetails"][i]["AmountPaid"].toString()),
+              "Description": value.data()!["incomeDetails"][i]["Description"],
             });
           }
         });
+
+        DateFormat inputFormat = DateFormat("dd/MM/yyyy");
+
+        setState(() {
+          incomeDetails.sort((first, second) =>
+              (inputFormat.parse(first["date"]))
+                  .compareTo((inputFormat.parse(second["date"]))));
+        });
+        print(incomeDetails);
       } else {
         setState(() {
           incomeDetails = [];
         });
       }
+    });
+    setState(() {
+      isLoading = false;
     });
   }
 
@@ -77,13 +110,23 @@ class _IncomePageState extends State<IncomePage> {
           ? FloatedButton(onTap: () {
               //print(batchDocIds[widget.index]);
 
-              NextScreen(
+              Navigator.push(
                   context,
-                  AddIncomePage(
-                    incomeCategoryList: incomeCategoryList,
-                    index: widget.index,
-                    owner: widget.owner,
-                  ));
+                  MaterialPageRoute(
+                      builder: (context) => AddIncomePage(
+                            incomeCategoryList: incomeCategoryList,
+                            index: widget.index,
+                            owner: widget.owner,
+                            isEdit: false,
+                          ))).then((value) {
+                if (value == null) {
+                  return;
+                } else {
+                  if (value) {
+                    getIncomeDetails();
+                  }
+                }
+              });
             })
           : null,
       appBar: PreferredSize(
@@ -126,37 +169,72 @@ class _IncomePageState extends State<IncomePage> {
             Divider(
               height: 0,
             ),
-            StreamBuilder(
-                stream: FirebaseFirestore.instance
-                    .collection('users')
-                    .doc(widget.owner)
-                    .collection('Batches')
-                    .doc(batchDocIds[widget.index])
-                    .collection("BatchData")
-                    .doc("Income")
-                    .snapshots(),
-                builder: (context, snapshot) {
-                  if (!snapshot.hasData || !snapshot.data!.exists) {
-                    if (snapshot.data?.exists == null) {
-                      return CircularProgressIndicator();
-                    } else {
-                      return Center(
-                          child: Text(
-                        "No Income data",
-                        style: bodyText15w500(color: black),
-                      ));
-                    }
-                  } else {
-                    return SizedBox(
-                      height: MediaQuery.of(context).size.height,
-                      child: ListView.separated(
-                          shrinkWrap: true,
-                          physics: NeverScrollableScrollPhysics(),
-                          itemBuilder: (context, index) {
-                            return Container(
-                              padding: EdgeInsets.symmetric(
-                                  horizontal: 15, vertical: 10),
-                              height: 80,
+            isLoading
+                ? CircularProgressIndicator()
+                : SizedBox(
+                    height: MediaQuery.of(context).size.height *
+                        incomeDetails.length *
+                        0.1,
+                    child: ListView.separated(
+                        shrinkWrap: true,
+                        physics: NeverScrollableScrollPhysics(),
+                        itemBuilder: (context, index) {
+                          return Container(
+                            padding: EdgeInsets.symmetric(
+                                horizontal: 15, vertical: 10),
+                            height: 80,
+                            child: InkWell(
+                              onTap: () {
+                                print('tapped');
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => AddIncomePage(
+                                      incomeCategoryList: incomeCategoryList,
+                                      index: widget.index,
+                                      owner: widget.owner,
+                                      isEdit: true,
+                                      date: DateFormat("dd/MMM/yyyy")
+                                          .format(DateFormat("dd/MM/yyyy")
+                                              .parse(
+                                                  incomeDetails[index]["date"]))
+                                          .toLowerCase(),
+                                      name: incomeDetails[index]["name"],
+                                      contact: incomeDetails[index]["Contact"],
+                                      incomeCategory: incomeDetails[index]
+                                          ["IncomeCategory"],
+                                      weight: incomeDetails[index]["Weight"],
+                                      billDue: double.parse(incomeDetails[index]
+                                              ["BillAmount"]
+                                          .toString()),
+                                      quantity: incomeDetails[index]
+                                          ["Quantity"],
+                                      paymentMethod: incomeDetails[index]
+                                          ["PaymentMethod"],
+                                      amountDue: incomeDetails[index]
+                                          ["AmountDue"],
+                                      amountPaid: incomeDetails[index]
+                                          ["AmountPaid"],
+                                      description: incomeDetails[index]
+                                          ["Description"],
+                                      rate: incomeDetails[index]["Rate"],
+                                      itemIndex: index,
+                                      upto: incomeDetails.sublist(0, index),
+                                      after: incomeDetails.sublist(
+                                        index + 1,
+                                      ),
+                                    ),
+                                  ),
+                                ).then((value) {
+                                  if (value == null) {
+                                    return;
+                                  } else {
+                                    if (value) {
+                                      getIncomeDetails();
+                                    }
+                                  }
+                                });
+                              },
                               child: Row(
                                 mainAxisAlignment:
                                     MainAxisAlignment.spaceBetween,
@@ -168,16 +246,16 @@ class _IncomePageState extends State<IncomePage> {
                                         MainAxisAlignment.spaceBetween,
                                     children: [
                                       Text(
-                                        "${snapshot.data!.data()!["incomeDetails"][index]["date"]}",
+                                        "${incomeDetails[index]["date"]}",
                                         style:
                                             bodyText12normal(color: darkGray),
                                       ),
                                       Text(
-                                        "${snapshot.data!.data()!["incomeDetails"][index]["name"]}",
+                                        "${incomeDetails[index]["name"]}",
                                         style: bodyText15w500(color: black),
                                       ),
                                       Text(
-                                        "${snapshot.data!.data()!["incomeDetails"][index]["IncomeCategory"]}",
+                                        "${incomeDetails[index]["IncomeCategory"]}",
                                         style:
                                             bodyText12normal(color: darkGray),
                                       )
@@ -198,16 +276,14 @@ class _IncomePageState extends State<IncomePage> {
                                         ],
                                       ),
                                       Text(
-                                        double.parse(snapshot.data!
-                                                    .data()!["incomeDetails"]
-                                                        [index]["AmountDue"]
+                                        double.parse(incomeDetails[index]
+                                                        ["AmountDue"]
                                                     .toString()) >
                                                 0
-                                            ? "${snapshot.data!.data()!["incomeDetails"][index]["AmountDue"]}"
-                                            : "${snapshot.data!.data()!["incomeDetails"][index]["BillAmount"]}",
-                                        style: double.parse(snapshot.data!
-                                                    .data()!["incomeDetails"]
-                                                        [index]["AmountDue"]
+                                            ? "${double.parse(incomeDetails[index]["AmountDue"].toString())}"
+                                            : "${double.parse(incomeDetails[index]["BillAmount"].toString())}",
+                                        style: double.parse(incomeDetails[index]
+                                                        ["AmountDue"]
                                                     .toString()) >
                                                 0
                                             ? bodyText18w600(color: red)
@@ -217,19 +293,15 @@ class _IncomePageState extends State<IncomePage> {
                                   ),
                                 ],
                               ),
-                            );
-                          },
-                          separatorBuilder: (context, index) {
-                            return Divider(
-                              height: 0,
-                            );
-                          },
-                          itemCount:
-                              (snapshot.data!.data()!["incomeDetails"] ?? [])
-                                  .length),
-                    );
-                  }
-                }),
+                            ),
+                          );
+                        },
+                        separatorBuilder: (context, index) {
+                          return Divider(
+                            height: 0,
+                          );
+                        },
+                        itemCount: incomeDetails.length)),
             Divider(
               height: 0,
             ),

@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:poultry_app/screens/farmsettings/addfeedtype.dart';
+import 'package:poultry_app/screens/farmsettings/userinfo.dart';
 import 'package:poultry_app/utils/constants.dart';
 import 'package:poultry_app/widgets/floatbutton.dart';
 import 'package:poultry_app/widgets/generalappbar.dart';
@@ -14,18 +15,14 @@ class FeedType extends StatefulWidget {
 }
 
 class FeedTypeState extends State<FeedType> {
-  List<dynamic> feedTypeList = [
-    "Pre Starter",
-    "Starter",
-    "Phase 1",
-    "Phase 2",
-  ];
-  int length = 0;
+  List feedTypeList = [];
+  bool isLoading = true;
 
-  Future<List<dynamic>?> fetchData() async {
-    //print(incomeCategoryList);
-    FirebaseFirestore firestore = FirebaseFirestore.instance;
-    final querySnapshot = await firestore
+  Future<void> fetchData() async {
+    setState(() {
+      isLoading = true;
+    });
+    await FirebaseFirestore.instance
         .collection('users')
         .doc(user)
         .collection("settings")
@@ -36,16 +33,10 @@ class FeedTypeState extends State<FeedType> {
         setState(() {
           feedTypeList = value.data()?['feedType'];
         });
-        // return feedTypeList + value.data()?['feedType'];
-      } else {
-        await firestore
-            .collection('users')
-            .doc(user)
-            .collection("settings")
-            .doc("Feed Type")
-            .set({"feedType": feedTypeList});
-        return feedTypeList;
       }
+    });
+    setState(() {
+      isLoading = false;
     });
   }
 
@@ -56,18 +47,19 @@ class FeedTypeState extends State<FeedType> {
 
   @override
   Widget build(BuildContext context) {
-    // List cat = [
-    //   "Pre Starter",
-    //   "Starter",
-    //   "Phase 1",
-    //   "Phase 2",
-    // ];
-    //
-    // feedTypeList.add(cat as String);
-
     return Scaffold(
       floatingActionButton: FloatedButton(onTap: () {
-        NextScreen(context, AddFeedType());
+        Navigator.push(
+                context, MaterialPageRoute(builder: (context) => AddFeedType()))
+            .then((value) {
+          if (value == null) {
+            return;
+          } else {
+            if (value) {
+              fetchData();
+            }
+          }
+        });
       }),
       appBar: PreferredSize(
         child: GeneralAppBar(
@@ -84,25 +76,27 @@ class FeedTypeState extends State<FeedType> {
             Divider(
               height: 0,
             ),
-            SizedBox(
-                height: MediaQuery.of(context).size.height * 0.8,
-                child: ListView.separated(
-                    shrinkWrap: true,
-                    physics: NeverScrollableScrollPhysics(),
-                    itemCount: feedTypeList.length,
-                    separatorBuilder: (context, index) {
-                      return Divider(
-                        height: 0,
-                      );
-                    },
-                    itemBuilder: (context, index) {
-                      return ListTile(
-                        title: Text(
-                          feedTypeList[index],
-                          style: bodyText17w500(color: black),
-                        ),
-                      );
-                    })),
+            isLoading
+                ? CircularProgressIndicator()
+                : SizedBox(
+                    height: MediaQuery.of(context).size.height * 0.8,
+                    child: ListView.separated(
+                        shrinkWrap: true,
+                        physics: NeverScrollableScrollPhysics(),
+                        itemCount: feedTypeList.length,
+                        separatorBuilder: (context, index) {
+                          return Divider(
+                            height: 0,
+                          );
+                        },
+                        itemBuilder: (context, index) {
+                          return ListTile(
+                            title: Text(
+                              feedTypeList[index],
+                              style: bodyText17w500(color: black),
+                            ),
+                          );
+                        })),
             const Divider(
               height: 0,
             ),

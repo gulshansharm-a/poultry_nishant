@@ -1,4 +1,8 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 import 'package:poultry_app/utils/constants.dart';
 import 'package:poultry_app/widgets/custombutton.dart';
 import 'package:poultry_app/widgets/customdropdown.dart';
@@ -14,6 +18,32 @@ class AddChickFeedReq extends StatefulWidget {
 
 class _AddChickFeedReqState extends State<AddChickFeedReq> {
   List breed = ["Broiler", "Deshi", "Layer", "Breeder Farm"];
+  List feedTypeList = [];
+  TextEditingController dayController = TextEditingController();
+  TextEditingController gramsController = TextEditingController();
+  String breedSelected = "";
+  String feedSelected = "";
+
+  Future<void> fetchData() async {
+    await FirebaseFirestore.instance
+        .collection('users')
+        .doc(FirebaseAuth.instance.currentUser!.uid)
+        .collection("settings")
+        .doc("Feed Type")
+        .get()
+        .then((value) async {
+      if (value.exists) {
+        setState(() {
+          feedTypeList = value.data()?['feedType'];
+        });
+      }
+    });
+  }
+
+  void initState() {
+    super.initState();
+    fetchData();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -37,16 +67,161 @@ class _AddChickFeedReqState extends State<AddChickFeedReq> {
                 Column(
                   children: [
                     addVerticalSpace(20),
-                    CustomTextField(hintText: "Day"),
-                    CustomDropdown(list: breed, height: 58, hint: "Breed"),
-                    CustomDropdown(
-                        list: ['Pre Starter', 'Starter', 'Phase-1', 'Phase-2'],
-                        height: 58,
-                        hint: "Feed Type"),
-                    CustomTextField(hintText: "Grams"),
+                    CustomTextField(
+                      hintText: "Day",
+                      textType: TextInputType.number,
+                      controller: dayController,
+                    ),
+                    Container(
+                        margin: EdgeInsets.symmetric(vertical: 6),
+                        height: 55,
+                        width: width(context),
+                        decoration: shadowDecoration(
+                          10,
+                          0,
+                          tfColor,
+                          bcolor: normalGray,
+                        ),
+                        padding:
+                            EdgeInsets.symmetric(horizontal: 5, vertical: 6),
+                        child: Padding(
+                          padding: EdgeInsets.symmetric(horizontal: 15),
+                          child: Container(
+                            height: height(context) * 0.04,
+                            child: Row(
+                              children: [
+                                Expanded(
+                                  child: DropdownButton(
+                                      icon: Icon(
+                                        CupertinoIcons.chevron_down,
+                                        size: 18,
+                                        color: gray,
+                                      ),
+                                      hint: Text(
+                                        breedSelected.isNotEmpty
+                                            ? breedSelected
+                                            : "Breed Type",
+                                        style:
+                                            bodyText16normal(color: darkGray),
+                                      ),
+                                      style: bodyText15normal(color: black),
+                                      dropdownColor: white,
+                                      underline: SizedBox(),
+                                      isExpanded: true,
+                                      items: breed.map((e) {
+                                        return DropdownMenuItem(
+                                            value: e.toString(),
+                                            child: Text(e.toString()));
+                                      }).toList(),
+                                      onChanged: (value) {
+                                        print(value);
+                                        setState(() {
+                                          breedSelected = value!;
+                                        });
+
+                                        // print(widget.value);
+                                        // print(widget.value);
+                                      }),
+                                ),
+                              ],
+                            ),
+                          ),
+                        )),
+                    Container(
+                        margin: EdgeInsets.symmetric(vertical: 6),
+                        height: 55,
+                        width: width(context),
+                        decoration: shadowDecoration(
+                          10,
+                          0,
+                          tfColor,
+                          bcolor: normalGray,
+                        ),
+                        padding:
+                            EdgeInsets.symmetric(horizontal: 5, vertical: 6),
+                        child: Padding(
+                          padding: EdgeInsets.symmetric(horizontal: 15),
+                          child: Container(
+                            height: height(context) * 0.04,
+                            child: Row(
+                              children: [
+                                Expanded(
+                                  child: DropdownButton(
+                                      icon: Icon(
+                                        CupertinoIcons.chevron_down,
+                                        size: 18,
+                                        color: gray,
+                                      ),
+                                      hint: Text(
+                                        feedSelected.isNotEmpty
+                                            ? feedSelected
+                                            : "Feed Type",
+                                        style:
+                                            bodyText16normal(color: darkGray),
+                                      ),
+                                      style: bodyText15normal(color: black),
+                                      dropdownColor: white,
+                                      underline: SizedBox(),
+                                      isExpanded: true,
+                                      items: feedTypeList.map((e) {
+                                        return DropdownMenuItem(
+                                            value: e.toString(),
+                                            child: Text(e.toString()));
+                                      }).toList(),
+                                      onChanged: (value) {
+                                        print(value);
+                                        setState(() {
+                                          feedSelected = value!;
+                                        });
+
+                                        // print(widget.value);
+                                        // print(widget.value);
+                                      }),
+                                ),
+                              ],
+                            ),
+                          ),
+                        )),
+                    CustomTextField(
+                      hintText: "Grams",
+                      textType: TextInputType.number,
+                      controller: gramsController,
+                    ),
                   ],
                 ),
-                CustomButton(text: "Add", onClick: () {})
+                CustomButton(
+                  text: "Add",
+                  onClick: () async {
+                    if (gramsController.text.toString().length != 0 &&
+                        dayController.text.toString().length != 0 &&
+                        feedSelected.length != 0 &&
+                        breedSelected.length != 0) {
+                      await FirebaseFirestore.instance
+                          .collection("users")
+                          .doc(FirebaseAuth.instance.currentUser!.uid)
+                          .collection("settings")
+                          .doc("Chick Feed Requirement")
+                          .collection(breedSelected)
+                          .doc(feedSelected)
+                          .set({
+                        "dayDetails": FieldValue.arrayUnion([
+                          {
+                            "day": dayController.text.toString(),
+                            "grams": gramsController.text.toString(),
+                            "breed": breedSelected,
+                            "feed": feedSelected,
+                          }
+                        ]),
+                      }, SetOptions(merge: true));
+
+                      Fluttertoast.showToast(msg: "Data Added Successfully!");
+
+                      Navigator.pop(context, true);
+                    } else {
+                      Fluttertoast.showToast(msg: "Error!");
+                    }
+                  },
+                )
               ],
             ),
           ),

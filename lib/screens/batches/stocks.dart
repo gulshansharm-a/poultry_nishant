@@ -8,7 +8,7 @@ import 'package:intl/intl.dart';
 
 class StocksPage extends StatefulWidget {
   String docId;
-  String owner; 
+  String owner;
   StocksPage({super.key, required this.docId, required this.owner});
   MyStocksPageState createState() => MyStocksPageState();
 }
@@ -188,11 +188,11 @@ class MyStocksPageState extends State<StocksPage> {
                               style: bodyText10normal(color: black),
                             ),
                             Text(
-                              "Served: ${stocks[index]["served"]} bags",
+                              "Served: ${double.parse(stocks[index]["served"].toString()).toStringAsFixed(2)} bags",
                               style: bodyText10normal(color: black),
                             ),
                             Text(
-                              "Remaining: ${stocks[index]["remaining"]} bags",
+                              "Remaining: ${double.parse(stocks[index]["remaining"].toString()).toStringAsFixed(2)} bags",
                               style: bodyText10normal(color: black),
                             ),
                           ],

@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:poultry_app/screens/farmsettings/addexpensescat.dart';
 import 'package:poultry_app/utils/constants.dart';
@@ -16,40 +17,49 @@ class ExpensesCategoryPage extends StatefulWidget {
 }
 
 class _ExpensesCategoryPageState extends State<ExpensesCategoryPage> {
-  List <String> ExpenseCartegoryList = [
-  ];
+  List expensesList = ["Chicks"];
   int length = 0;
+  bool isLoading = true;
 
-  Future<List<String>?> fetchData() async {
-    print(ExpenseCartegoryList);
-    FirebaseFirestore firestore = FirebaseFirestore.instance;
-    final querySnapshot = await firestore.collection('users').doc(user).collection("settings").doc(user).collection("Expenses Category").get();
-    List<String>  newExpenseCartegoryList= [];
-    querySnapshot.docs.forEach((doc) {
-      newExpenseCartegoryList.add(doc.get("Expenses Category").toString());
+  Future<void> getExpensesType() async {
+    setState(() {
+      isLoading = true;
     });
-    ExpenseCartegoryList = List.from(Set.from(ExpenseCartegoryList)..addAll(newExpenseCartegoryList));
-    length = ExpenseCartegoryList.length;
-    querySnapshot.docs.forEach((doc) {
-      //   print("int "+doc.get("date").toString());
-      // });
-      //print("length "+querySnapshot.size.toString());
-      length = querySnapshot.size;
+    expensesList.clear();
+    await FirebaseFirestore.instance
+        .collection("users")
+        .doc(FirebaseAuth.instance.currentUser!.uid)
+        .collection("settings")
+        .doc("Expense Type")
+        .get()
+        .then((value) async {
+      if (value.exists) {
+        setState(() {
+          expensesList = value.data()!["expenseType"];
+        });
+      } else {
+        await FirebaseFirestore.instance
+            .collection("users")
+            .doc(FirebaseAuth.instance.currentUser!.uid)
+            .collection("settings")
+            .doc("Expense Type")
+            .set({
+          "expenseType": expensesList,
+        });
+      }
     });
-    print(length);
-    return Future.delayed(const Duration(seconds: 1), () {
-      return ExpenseCartegoryList;
+    setState(() {
+      isLoading = false;
     });
-
   }
 
+  void initState() {
+    super.initState();
+    getExpensesType();
+  }
 
   @override
   Widget build(BuildContext context) {
-
-
-    fetchData();
-
     return Scaffold(
       floatingActionButton: FloatedButton(onTap: () {
         NextScreen(context, AddExpensesCategory());
@@ -69,43 +79,25 @@ class _ExpensesCategoryPageState extends State<ExpensesCategoryPage> {
             Divider(
               height: 0,
             ),
-            SizedBox(
-                height: MediaQuery.of(context).size.height,
-                child: FutureBuilder<List<String>?>(
-                    future: fetchData(),
-                    builder: (context , snapshot) {
-                      if (snapshot == null) {
-                        return const Center(child: Text('Add Income Category'));
-                      } else if (snapshot.hasData) {
-                        return ListView.separated(
-                            shrinkWrap: true,
-                            physics: NeverScrollableScrollPhysics(),
-                            itemCount: length+9,
-                            separatorBuilder: (context, index) {
-                              return Divider(
-                                height: 0,
-                              );
-                            },
-                            itemBuilder: (context, index) {
-                              return ListTile(
-                                title: Text(
-                                  ExpenseCartegoryList[index],
-                                  style: bodyText17w500(color: black),
-                                ),
-                              );
-                            });
-                      } else if (snapshot.hasError) {
-                        return Center(
-                          child: Text('Error: ${snapshot.error}'),
-                        );
-                      }
-                      else {
-                        return const Center(
-                          child: CircularProgressIndicator(),
-                        );
-                      }
-                    })),
-
+            isLoading
+                ? CircularProgressIndicator()
+                : ListView.separated(
+                    shrinkWrap: true,
+                    physics: NeverScrollableScrollPhysics(),
+                    itemCount: expensesList.length,
+                    separatorBuilder: (context, index) {
+                      return Divider(
+                        height: 0,
+                      );
+                    },
+                    itemBuilder: (context, index) {
+                      return ListTile(
+                        title: Text(
+                          expensesList[index],
+                          style: bodyText17w500(color: black),
+                        ),
+                      );
+                    }),
             const Divider(
               height: 0,
             ),
@@ -115,7 +107,6 @@ class _ExpensesCategoryPageState extends State<ExpensesCategoryPage> {
                 Divider(
                   height: 0,
                 ),
-
                 Divider(
                   height: 0,
                 ),

@@ -35,9 +35,16 @@ class _BodyWeightPageState extends State<BodyWeightPage> {
   ];
 
   List weightDetails = [];
+  List editDetails = [];
+  String breedType = ""; 
 
   DateTime batchDate = DateTime.utc(1800, 01, 01);
+  bool isLoading = true;
+
   Future<void> getDateDetails() async {
+    setState(() {
+      isLoading = true;
+    });
     await FirebaseFirestore.instance
         .collection('users')
         .doc(widget.owner)
@@ -45,6 +52,9 @@ class _BodyWeightPageState extends State<BodyWeightPage> {
         .doc(widget.batchId)
         .get()
         .then((value) {
+      setState(() {
+        breedType = value.data()!["Breed"]; 
+      });
       List dates = value.data()!["date"].toString().split("/");
       int month = 0;
       int day = int.parse(dates[0]);
@@ -93,15 +103,58 @@ class _BodyWeightPageState extends State<BodyWeightPage> {
       });
       print(batchDate);
     });
+  
+    getWeightDetails();
   }
 
   void initState() {
     super.initState();
     getDateDetails();
-    getWeightDetails();
   }
 
+
+  
+
   Future<void> getWeightDetails() async {
+    double feedGivenDay = 0.0;
+    Map feedDetails = {};
+
+    setState(() {
+      weightDetails.clear();
+      editDetails.clear();
+    });
+
+    await FirebaseFirestore.instance
+        .collection("users")
+        .doc(widget.owner)
+        .collection("Batches")
+        .doc(widget.batchId)
+        .collection("BatchData")
+        .doc("Feed Served")
+        .get()
+        .then((value) {
+      if (value.exists) {
+        for (int i = 0; i < value.data()!["feedServed"].length; i++) {
+          if (feedDetails.containsKey(value.data()!["feedServed"][i]["date"])) {
+            setState(() {
+              feedDetails[value.data()!["feedServed"][i]["date"]] +=
+                  double.parse(value
+                      .data()!["feedServed"][i]["feedQuantity"]
+                      .toString());
+            });
+          } else {
+            setState(() {
+              feedDetails[value.data()!["feedServed"][i]["date"]] =
+                  double.parse(value
+                      .data()!["feedServed"][i]["feedQuantity"]
+                      .toString());
+            });
+          }
+        }
+      }
+      print(feedDetails);
+    });
+
     await FirebaseFirestore.instance
         .collection("users")
         .doc(widget.owner)
@@ -158,17 +211,151 @@ class _BodyWeightPageState extends State<BodyWeightPage> {
           int year = int.parse(dates[2]);
           DateTime bodyWeightDate = DateTime.utc(year, month, day);
 
+          if (feedDetails
+              .containsKey(value.data()!["weightDetails"][i]["date"])) {
+            setState(() {
+              feedGivenDay =
+                  feedDetails[value.data()!["weightDetails"][i]["date"]];
+            });
+          }
+
           setState(() {
             weightDetails.add({
-              "bodyWeight":
-                  value.data()!["weightDetails"][i]["bodyWeight"].toString(),
+              "bodyWeight": double.parse(
+                  value.data()!["weightDetails"][i]["bodyWeight"].toString()),
               "date": DateFormat("dd/MM/yyyy").format(bodyWeightDate),
               "day": bodyWeightDate.difference(batchDate).inDays + 1,
-              "fcr": 3,
+              "fcr": double.parse(((feedGivenDay * 1000) /
+                          double.parse(value
+                              .data()!["weightDetails"][i]["bodyWeight"]
+                              .toString()))
+                      .toString())
+                  .toStringAsFixed(3),
+            });
+
+            editDetails.add({
+              "date": value.data()!["weightDetails"][i]["date"],
+              "bodyWeight": value.data()!["weightDetails"][i]["bodyWeight"],
             });
           });
         }
+
+        DateFormat inputFormat = DateFormat("dd/MM/yyyy");
+
+        setState(() {
+          weightDetails.sort((first, second) =>
+              (inputFormat.parse(first["date"]))
+                  .compareTo((inputFormat.parse(second["date"]))));
+
+          editDetails.sort((first, second) {
+            String date1 = first["date"];
+            String date2 = second["date"];
+            DateTime dateTime1 = DateTime.now(), dateTime2 = DateTime.now();
+
+            List date = date1.toString().split("/");
+            int month = 0;
+            int day = int.parse(date[0]);
+            switch (date[1]) {
+              case "jan":
+                month = 1;
+                break;
+              case "feb":
+                month = 2;
+                break;
+              case "mar":
+                month = 3;
+                break;
+              case "apr":
+                month = 4;
+                break;
+              case "may":
+                month = 5;
+                break;
+              case "jun":
+                month = 6;
+                break;
+              case "jul":
+                month = 7;
+                break;
+              case "aug":
+                month = 8;
+                break;
+              case "sep":
+                month = 9;
+                break;
+              case "oct":
+                month = 10;
+                break;
+              case "nov":
+                month = 11;
+                break;
+              case "dec":
+                month = 12;
+                break;
+            }
+            int year = int.parse(date[2]);
+
+            setState(() {
+              dateTime1 = inputFormat
+                  .parse(inputFormat.format(DateTime.utc(year, month, day)));
+            });
+
+            date = date2.toString().split("/");
+            month = 0;
+            day = int.parse(date[0]);
+            switch (date[1]) {
+              case "jan":
+                month = 1;
+                break;
+              case "feb":
+                month = 2;
+                break;
+              case "mar":
+                month = 3;
+                break;
+              case "apr":
+                month = 4;
+                break;
+              case "may":
+                month = 5;
+                break;
+              case "jun":
+                month = 6;
+                break;
+              case "jul":
+                month = 7;
+                break;
+              case "aug":
+                month = 8;
+                break;
+              case "sep":
+                month = 9;
+                break;
+              case "oct":
+                month = 10;
+                break;
+              case "nov":
+                month = 11;
+                break;
+              case "dec":
+                month = 12;
+                break;
+            }
+            year = int.parse(date[2]);
+
+            setState(() {
+              dateTime2 = inputFormat
+                  .parse(inputFormat.format(DateTime.utc(year, month, day)));
+            });
+
+            return (dateTime1).compareTo(dateTime2);
+          });
+        });
+        print(weightDetails);
       }
+      setState(() {
+        isLoading = false;
+      });
     });
   }
 
@@ -184,12 +371,21 @@ class _BodyWeightPageState extends State<BodyWeightPage> {
       ),
       floatingActionButton: widget.accessLevel == 0 || widget.accessLevel == 2
           ? FloatedButton(onTap: () {
-              NextScreen(
+              Navigator.push(
                   context,
-                  AddBodyWeight(
-                    batchId: widget.batchId,
-                    owner: widget.owner,
-                  ));
+                  MaterialPageRoute(
+                      builder: (context) => AddBodyWeight(
+                            batchId: widget.batchId,
+                            owner: widget.owner,
+                          ))).then((value) {
+                if (value == null) {
+                  return;
+                } else {
+                  if (value) {
+                    getWeightDetails();
+                  }
+                }
+              });
             })
           : null,
       body: Column(
@@ -226,85 +422,44 @@ class _BodyWeightPageState extends State<BodyWeightPage> {
           Divider(
             height: 0,
           ),
-          StreamBuilder(
-            stream: FirebaseFirestore.instance
-                .collection("users")
-                .doc(widget.owner)
-                .collection("Batches")
-                .doc(widget.batchId)
-                .collection("BatchData")
-                .doc("Body Weight")
-                .snapshots(),
-            builder: (context, snapshot) {
-              if (!snapshot.hasData ||
-                  batchDate == DateTime.utc(1800, 01, 01) ||
-                  !snapshot.data!.exists) {
-                if (snapshot.data?.exists == null) {
-                  return CircularProgressIndicator();
-                } else {
-                  return Center(
-                      child: Text(
-                    "No Body Weight data",
-                    style: bodyText15w500(color: black),
-                  ));
-                }
-              } else {
-                return ListView.separated(
-                    padding: EdgeInsets.zero,
-                    shrinkWrap: true,
-                    physics: NeverScrollableScrollPhysics(),
-                    itemBuilder: (context, index) {
-                      DateTime bodyWeightDate = DateTime.now();
-
-                      List dates = snapshot.data!
-                          .data()!["weightDetails"][index]["date"]
-                          .toString()
-                          .split("/");
-                      int month = 0;
-                      int day = int.parse(dates[0]);
-                      switch (dates[1]) {
-                        case "jan":
-                          month = 1;
-                          break;
-                        case "feb":
-                          month = 2;
-                          break;
-                        case "mar":
-                          month = 3;
-                          break;
-                        case "apr":
-                          month = 4;
-                          break;
-                        case "may":
-                          month = 5;
-                          break;
-                        case "jun":
-                          month = 6;
-                          break;
-                        case "jul":
-                          month = 7;
-                          break;
-                        case "aug":
-                          month = 8;
-                          break;
-                        case "sep":
-                          month = 9;
-                          break;
-                        case "oct":
-                          month = 10;
-                          break;
-                        case "nov":
-                          month = 11;
-                          break;
-                        case "dec":
-                          month = 12;
-                          break;
-                      }
-                      int year = int.parse(dates[2]);
-
-                      bodyWeightDate = DateTime.utc(year, month, day);
-
-                      return Container(
+          isLoading
+              ? CircularProgressIndicator()
+              : ListView.separated(
+                  padding: EdgeInsets.zero,
+                  shrinkWrap: true,
+                  physics: NeverScrollableScrollPhysics(),
+                  itemBuilder: (context, index) {
+                    return InkWell(
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => AddBodyWeight(
+                              batchId: widget.batchId,
+                              owner: widget.owner,
+                              bodyWeight: double.parse(weightDetails[index]
+                                      ["bodyWeight"]
+                                  .toString()),
+                              date: weightDetails[index]["date"],
+                              isEdit: true,
+                              batchIndex: index,
+                              upto: editDetails.sublist(0, index),
+                              after: editDetails.sublist(
+                                index + 1,
+                              ),
+                            ),
+                          ),
+                        ).then((value) {
+                          if (value == null) {
+                            return;
+                          } else {
+                            if (value) {
+                              getWeightDetails();
+                            }
+                          }
+                        });
+                      },
+                      child: Container(
                         padding:
                             EdgeInsets.symmetric(horizontal: 15, vertical: 12),
                         height: 70,
@@ -316,11 +471,11 @@ class _BodyWeightPageState extends State<BodyWeightPage> {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
-                                  "${DateFormat("dd/MM/yyyy").format(bodyWeightDate)}",
+                                  "${weightDetails[index]["date"]}",
                                   style: bodyText12normal(color: darkGray),
                                 ),
                                 Text(
-                                  "Day ${bodyWeightDate.difference(batchDate).inDays + 1}",
+                                  "Day ${weightDetails[index]["day"]}",
                                   style: bodyText17w500(color: black),
                                 ),
                               ],
@@ -330,28 +485,26 @@ class _BodyWeightPageState extends State<BodyWeightPage> {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
-                                  "${snapshot.data!.data()!["weightDetails"][index]["bodyWeight"]} gms",
+                                  "${weightDetails[index]["bodyWeight"]} gms",
                                   style: bodyText14normal(color: darkGray),
                                 ),
                                 Text(
-                                  "FCR: 3",
+                                  "FCR: ${weightDetails[index]["fcr"]}",
                                   style: bodyText14normal(color: darkGray),
                                 )
                               ],
                             )
                           ],
                         ),
-                      );
-                    },
-                    separatorBuilder: (context, index) {
-                      return Divider(
-                        height: 0,
-                      );
-                    },
-                    itemCount: snapshot.data!.data()!["weightDetails"].length);
-              }
-            },
-          ),
+                      ),
+                    );
+                  },
+                  separatorBuilder: (context, index) {
+                    return Divider(
+                      height: 0,
+                    );
+                  },
+                  itemCount: weightDetails.length),
           Divider(
             height: 0,
           ),

@@ -58,7 +58,12 @@ class _AnalysisWidgetState extends State<AnalysisWidget> {
     },
   ];
 
+  // Map incomeMap = {};
+
   Future<void> getFinancialPerformance() async {
+    // setState(() {
+    //   incomeMap.clear();
+    // });
     if (!mounted) return;
     double income = 0.0;
     double expenses = 0.0;
@@ -74,6 +79,23 @@ class _AnalysisWidgetState extends State<AnalysisWidget> {
         .then((value) {
       if (value.exists) {
         for (int i = 0; i < value.data()!["incomeDetails"].length; i++) {
+          // if (value.data()!["incomeDetails"][i]["IncomeCategory"] ==
+          //     "Chicken") {
+          //   if (incomeMap
+          //       .containsKey(value.data()!["incomeDetails"][i]["date"])) {
+          //     setState(() {
+          //       incomeMap[value.data()!["incomeDetails"][i]["date"]] +=
+          //           double.parse(
+          //               value.data()!["incomeDetails"][i]["Rate"].toString());
+          //     });
+          //   } else {
+          //     setState(() {
+          //       incomeMap[value.data()!["incomeDetails"][i]["date"]] =
+          //           double.parse(
+          //               value.data()!["incomeDetails"][i]["Rate"].toString());
+          //     });
+          //   }
+          // }
           setState(() {
             income += double.parse(
                 value.data()!["incomeDetails"][i]["BillAmount"].toString());
@@ -123,6 +145,7 @@ class _AnalysisWidgetState extends State<AnalysisWidget> {
     double originalPrice = 0.0;
     double totalFeedPrice = 0.0;
     int mortality = 0;
+    // Map feedData = {};
 
     await FirebaseFirestore.instance
         .collection("users")
@@ -135,6 +158,24 @@ class _AnalysisWidgetState extends State<AnalysisWidget> {
         .then((value) {
       if (value.exists) {
         for (int i = 0; i < value.data()!["feedServed"].length; i++) {
+          // if (feedData.containsKey(value.data()!["feedServed"][i]["date"])) {
+          //   setState(() {
+          //     feedData[value.data()!["feedServed"][i]["date"]] += (double.parse(
+          //             value.data()!["feedServed"][i]["feedPrice"].toString()) *
+          //         int.parse(value
+          //             .data()!["feedServed"][i]["feedQuantity"]
+          //             .toString()));
+          //   });
+          // } else {
+          //   setState(() {
+          //     feedData[value.data()!["feedServed"][i]["date"]] = (double.parse(
+          //             value.data()!["feedServed"][i]["feedPrice"].toString()) *
+          //         int.parse(value
+          //             .data()!["feedServed"][i]["feedQuantity"]
+          //             .toString()));
+          //   });
+          // }
+
           setState(() {
             totalFeedPrice += double.parse(
                     value.data()!["feedServed"][i]["feedQuantity"].toString()) *
@@ -160,7 +201,12 @@ class _AnalysisWidgetState extends State<AnalysisWidget> {
 
       setState(() {
         netBirds = noBirds - mortality - sold;
-        originalPrice = double.parse(value.data()!["CostPerBird"].toString());
+        String costBird = value.data()!["CostPerBird"] ?? "";
+        if (costBird == "") {
+          originalPrice = 0;
+        } else {
+          originalPrice = double.parse(value.data()!["CostPerBird"].toString());
+        }
         analysis[1]["c2data1"] = "${sold}";
       });
     });
@@ -172,10 +218,15 @@ class _AnalysisWidgetState extends State<AnalysisWidget> {
     print(updatedPrice);
     setState(() {
       analysis[1]["c1data1"] =
-          netBirds == 0 ? "Rs. 0" : "Rs. ${updatedPrice.ceil()}";
+          netBirds == 0 ? "Rs. 0" : "Rs. ${updatedPrice.toStringAsFixed(2)}";
       analysis[1]["c3data1"] =
-          "Rs. ${((updatedPrice * int.parse(analysis[1]["c2data1"].toString())) - (originalPrice * int.parse(analysis[1]["c2data1"].toString()))).ceil()}";
+          "Rs. ${((updatedPrice * int.parse(analysis[1]["c2data1"].toString())) - (originalPrice * int.parse(analysis[1]["c2data1"].toString()))).ceil()}"; //profit on sold birds
     });
+
+    // for(var keys in incomeMap.keys.toList()){
+    //   double cp = 0;
+
+    // }
 
     setState(() {
       loadStatus += 1;

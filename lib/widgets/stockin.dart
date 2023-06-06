@@ -39,29 +39,7 @@ class _StockInWidgetState extends State<StockInWidget> {
         setState(() {
           feedType = value.data()?['feedType'];
         });
-      } else {
-        await FirebaseFirestore.instance
-            .collection('users')
-            .doc(FirebaseAuth.instance.currentUser!.uid)
-            .collection("settings")
-            .doc("Feed Type")
-            .set({
-          "feedType": [
-            "Pre Starter",
-            "Starter",
-            "Phase 1",
-            "Phase 2",
-          ]
-        });
-        setState(() {
-          feedType = [
-            "Pre Starter",
-            "Starter",
-            "Phase 1",
-            "Phase 2",
-          ];
-        });
-      }
+      }       
     });
   }
 

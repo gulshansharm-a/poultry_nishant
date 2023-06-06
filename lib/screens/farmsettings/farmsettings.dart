@@ -64,7 +64,7 @@ class _FarmSettingsPageState extends State<FarmSettingsPage> {
     // },
     {
       "lead": "assets/images/remind.png",
-      "text": "Reminders",
+      "text": "Notifications",
       "screen": RemindersPage()
     },
     {
