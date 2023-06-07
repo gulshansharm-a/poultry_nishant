@@ -69,6 +69,19 @@ class _AddExpensesPageState extends State<AddExpensesPage> {
         setState(() {
           expenseType = value.data()?['expenseType'] ?? [];
         });
+      } else {
+        setState(() {
+          expenseType.add("Chicks");
+        });
+
+        await FirebaseFirestore.instance
+            .collection('users')
+            .doc(widget.owner)
+            .collection('settings')
+            .doc('Expense Type')
+            .set({
+          "expenseType": expenseType,
+        });
       }
     });
   }
@@ -142,6 +155,7 @@ class _AddExpensesPageState extends State<AddExpensesPage> {
         expensesCategoryController.text = widget.expensesCategory!;
       });
     }
+    getNoChicks();
     getExpenseType();
   }
 
@@ -213,8 +227,12 @@ class _AddExpensesPageState extends State<AddExpensesPage> {
                                               builder: (ctx) =>
                                                   AddExpensesCategory()))
                                       .then((value) {
-                                    if (value) {
-                                      getExpenseType();
+                                    if (value == null) {
+                                      return;
+                                    } else {
+                                      if (value) {
+                                        getExpenseType();
+                                      }
                                     }
                                   });
                                 },

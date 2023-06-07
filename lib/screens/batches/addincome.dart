@@ -255,7 +255,8 @@ class _AddIncomePageState extends State<AddIncomePage> {
         }
       });
     } else {
-      dateController.text = DateFormat("dd/MMM/yyyy").format(DateTime.now());
+      dateController.text =
+          DateFormat("dd/MMM/yyyy").format(DateTime.now()).toLowerCase();
     }
     getBatchType();
   }
@@ -717,6 +718,54 @@ class _AddIncomePageState extends State<AddIncomePage> {
                                         SetOptions(merge: true),
                                       );
 
+                                      List customers = [];
+
+                                      await FirebaseFirestore.instance
+                                          .collection("users")
+                                          .doc(FirebaseAuth
+                                              .instance.currentUser!.uid)
+                                          .collection("settings")
+                                          .doc("Customer List")
+                                          .get()
+                                          .then((value) {
+                                        if (value.exists) {
+                                          setState(() {
+                                            customers = value["customerList"];
+                                          });
+                                        }
+                                      });
+
+                                      for (int i = 0;
+                                          i < customers.length;
+                                          i++) {
+                                        if (customers[i]["contact"] ==
+                                                "+91 ${contactController.text.toString()}" &&
+                                            customers[i]["name"] ==
+                                                nameController.text
+                                                    .toString()) {
+                                          Fluttertoast.showToast(
+                                              msg: "Customer already exists!");
+                                        } else {
+                                          await FirebaseFirestore.instance
+                                              .collection("users")
+                                              .doc(FirebaseAuth
+                                                  .instance.currentUser!.uid)
+                                              .collection("settings")
+                                              .doc("Customer List")
+                                              .set({
+                                            "customerList":
+                                                FieldValue.arrayUnion([
+                                              {
+                                                "name": nameController.text
+                                                    .toString(),
+                                                "contact":
+                                                    "+91 ${contactController.text.toString()}",
+                                              }
+                                            ]),
+                                          }, SetOptions(merge: true));
+                                        }
+                                      }
+
                                       Fluttertoast.showToast(
                                           msg: "Details updated successfully!");
 
@@ -862,5 +911,43 @@ class _AddIncomePageState extends State<AddIncomePage> {
       },
       SetOptions(merge: true),
     );
+
+    List customers = [];
+
+    await FirebaseFirestore.instance
+        .collection("users")
+        .doc(FirebaseAuth.instance.currentUser!.uid)
+        .collection("settings")
+        .doc("Customer List")
+        .get()
+        .then((value) {
+      if (value.exists) {
+        setState(() {
+          customers = value["customerList"];
+        });
+      }
+    });
+
+    for (int i = 0; i < customers.length; i++) {
+      if (customers[i]["contact"] ==
+              "+91 ${contactController.text.toString()}" &&
+          customers[i]["name"] == nameController.text.toString()) {
+        Fluttertoast.showToast(msg: "Customer already exists!");
+      } else {
+        await FirebaseFirestore.instance
+            .collection("users")
+            .doc(FirebaseAuth.instance.currentUser!.uid)
+            .collection("settings")
+            .doc("Customer List")
+            .set({
+          "customerList": FieldValue.arrayUnion([
+            {
+              "name": nameController.text.toString(),
+              "contact": "+91 ${contactController.text.toString()}",
+            }
+          ]),
+        }, SetOptions(merge: true));
+      }
+    }
   }
 }

@@ -78,7 +78,7 @@ class _ShowCalendarState extends State<ShowCalendar> {
                       widget.controller.text = currentDate.toLowerCase();
                       goBack(context);
                     }
-                  }
+                  } 
                 }
               });
             }
