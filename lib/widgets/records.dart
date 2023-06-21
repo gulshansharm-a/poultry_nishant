@@ -21,7 +21,11 @@ class RecordsWidget extends StatelessWidget {
         itemBuilder: (context, index) {
           return ListTile(
             onTap: () {
-              NextScreen(context, record[index]['screen']);
+              Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                          builder: (context) => record[index]['screen']))
+                  .then((value) {});
             },
             leading: Image.asset(
               record[index]['lead'],

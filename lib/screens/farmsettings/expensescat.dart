@@ -24,6 +24,7 @@ class _ExpensesCategoryPageState extends State<ExpensesCategoryPage> {
   Future<void> getExpensesType() async {
     setState(() {
       isLoading = true;
+      expensesList.clear();
     });
     expensesList.clear();
     await FirebaseFirestore.instance
@@ -62,7 +63,17 @@ class _ExpensesCategoryPageState extends State<ExpensesCategoryPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       floatingActionButton: FloatedButton(onTap: () {
-        NextScreen(context, AddExpensesCategory());
+        Navigator.push(context,
+                MaterialPageRoute(builder: (context) => AddExpensesCategory()))
+            .then((value) {
+          if (value == null) {
+            return;
+          } else {
+            if (value) {
+              getExpensesType();
+            }
+          }
+        });
       }),
       appBar: PreferredSize(
         child: GeneralAppBar(

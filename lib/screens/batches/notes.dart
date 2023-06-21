@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 import 'package:poultry_app/screens/batches/addmortality.dart';
 import 'package:poultry_app/screens/batches/addnotes.dart';
 import 'package:poultry_app/screens/batches/batches.dart';
@@ -283,7 +284,158 @@ class MyNotesPageState extends State<NotesPage> {
                                       batchNotes[index]["title"],
                                       style: bodyText17w500(color: black),
                                     ),
-                                    Icon(Icons.delete_outline_rounded)
+                                    InkWell(
+                                      child: Icon(Icons.delete_outline_rounded),
+                                      onTap: () => showDialog(
+                                        context: context,
+                                        builder: (context) {
+                                          return AlertDialog(
+                                            contentPadding:
+                                                const EdgeInsets.all(6),
+                                            shape: RoundedRectangleBorder(
+                                              borderRadius:
+                                                  BorderRadius.circular(10.0),
+                                            ),
+                                            content: Builder(
+                                              builder: (context) {
+                                                var height =
+                                                    MediaQuery.of(context)
+                                                        .size
+                                                        .height;
+                                                var width =
+                                                    MediaQuery.of(context)
+                                                        .size
+                                                        .width;
+
+                                                return Container(
+                                                  height: height * 0.15,
+                                                  padding: EdgeInsets.all(
+                                                    10.0,
+                                                  ),
+                                                  child: Column(
+                                                    children: [
+                                                      // SizedBox(
+                                                      //   height: 20.0,
+                                                      // ),
+                                                      Center(
+                                                        child: Text(
+                                                          "Do you want to delete this item?",
+                                                          textAlign:
+                                                              TextAlign.center,
+                                                          style: bodyText16Bold(
+                                                            color: black,
+                                                          ),
+                                                        ),
+                                                      ),
+                                                      Spacer(),
+                                                      Row(
+                                                        children: [
+                                                          InkWell(
+                                                            onTap: () {
+                                                              Navigator.pop(
+                                                                  context);
+                                                            },
+                                                            child: Container(
+                                                              height: 40,
+                                                              width:
+                                                                  width * 0.3,
+                                                              decoration: BoxDecoration(
+                                                                  border: Border
+                                                                      .all(
+                                                                          color:
+                                                                              yellow),
+                                                                  borderRadius:
+                                                                      BorderRadius
+                                                                          .circular(
+                                                                              6)),
+                                                              child: Center(
+                                                                child: Text(
+                                                                  'Cancel',
+                                                                  style: bodyText14Bold(
+                                                                      color:
+                                                                          black),
+                                                                ),
+                                                              ),
+                                                            ),
+                                                          ),
+                                                          addHorizontalySpace(
+                                                              20),
+                                                          InkWell(
+                                                            onTap: () async {
+                                                              await FirebaseFirestore
+                                                                  .instance
+                                                                  .collection(
+                                                                      'users')
+                                                                  .doc(widget
+                                                                      .owner)
+                                                                  .collection(
+                                                                      'Batches')
+                                                                  .doc(batchDocIds[
+                                                                      widget
+                                                                          .index])
+                                                                  .collection(
+                                                                      'BatchData')
+                                                                  .doc('Notes')
+                                                                  .set({
+                                                                "notes": editDetails
+                                                                        .sublist(
+                                                                            0,
+                                                                            index) +
+                                                                    editDetails
+                                                                        .sublist(
+                                                                      index + 1,
+                                                                    ),
+                                                              });
+
+                                                              Fluttertoast
+                                                                  .showToast(
+                                                                      msg:
+                                                                          "Deletion successful!");
+
+                                                              Navigator.pop(
+                                                                  context,
+                                                                  true);
+                                                            },
+                                                            child: Container(
+                                                              height: 40,
+                                                              width:
+                                                                  width * 0.3,
+                                                              decoration: BoxDecoration(
+                                                                  color: red,
+                                                                  borderRadius:
+                                                                      BorderRadius
+                                                                          .circular(
+                                                                              6)),
+                                                              child: Center(
+                                                                child: Text(
+                                                                  'Delete',
+                                                                  style: bodyText14Bold(
+                                                                      color: Colors
+                                                                          .white),
+                                                                ),
+                                                              ),
+                                                            ),
+                                                          ),
+                                                        ],
+                                                      ),
+                                                    ],
+                                                  ),
+                                                );
+                                              },
+                                            ),
+                                          );
+                                        },
+                                        barrierDismissible: false,
+                                      ).then((value) {
+                                        if (value == null) {
+                                          return;
+                                        } else {
+                                          if (value) {
+                                            getNotes();
+                                          }
+                                        }
+                                      }),
+                                    ),
                                   ],
                                 ),
                                 Text(

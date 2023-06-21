@@ -3,6 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/semantics.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 import 'package:poultry_app/screens/batches/addincome.dart';
 import 'package:poultry_app/screens/batches/batches.dart';
 import 'package:poultry_app/screens/farmsettings/incomecat.dart';
@@ -72,6 +73,8 @@ class _IncomePageState extends State<IncomePage> {
                   value.data()!["incomeDetails"][i]["Quantity"].toString()),
               "PaymentMethod": value.data()!["incomeDetails"][i]
                   ["PaymentMethod"],
+              "CostPerBird": double.parse(
+                  value.data()!["incomeDetails"][i]["CostPerBird"].toString()),
               "AmountPaid": double.parse(
                   value.data()!["incomeDetails"][i]["AmountPaid"].toString()),
               "Description": value.data()!["incomeDetails"][i]["Description"],
@@ -211,6 +214,8 @@ class _IncomePageState extends State<IncomePage> {
                                           ["Quantity"],
                                       paymentMethod: incomeDetails[index]
                                           ["PaymentMethod"],
+                                      updatedPrice: incomeDetails[index]
+                                          ["CostPerBird"],
                                       amountDue: incomeDetails[index]
                                           ["AmountDue"],
                                       amountPaid: incomeDetails[index]
@@ -270,8 +275,170 @@ class _IncomePageState extends State<IncomePage> {
                                           Image.asset(
                                               "assets/images/share.png"),
                                           addHorizontalySpace(10),
-                                          ImageIcon(AssetImage(
-                                              "assets/images/delete.png"))
+                                          InkWell(
+                                            onTap: () => showDialog(
+                                                context: context,
+                                                builder: (context) {
+                                                  return AlertDialog(
+                                                      contentPadding:
+                                                          const EdgeInsets.all(
+                                                              6),
+                                                      shape:
+                                                          RoundedRectangleBorder(
+                                                        borderRadius:
+                                                            BorderRadius
+                                                                .circular(10.0),
+                                                      ),
+                                                      content: Builder(
+                                                        builder: (context) {
+                                                          var height =
+                                                              MediaQuery.of(
+                                                                      context)
+                                                                  .size
+                                                                  .height;
+                                                          var width =
+                                                              MediaQuery.of(
+                                                                      context)
+                                                                  .size
+                                                                  .width;
+
+                                                          return Container(
+                                                            height:
+                                                                height * 0.15,
+                                                            padding:
+                                                                EdgeInsets.all(
+                                                              10.0,
+                                                            ),
+                                                            child: Column(
+                                                              children: [
+                                                                // SizedBox(
+                                                                //   height: 20.0,
+                                                                // ),
+                                                                Center(
+                                                                  child: Text(
+                                                                    "Do you want to delete this item?",
+                                                                    textAlign:
+                                                                        TextAlign
+                                                                            .center,
+                                                                    style:
+                                                                        bodyText16Bold(
+                                                                      color:
+                                                                          black,
+                                                                    ),
+                                                                  ),
+                                                                ),
+                                                                Spacer(),
+                                                                Row(
+                                                                  children: [
+                                                                    InkWell(
+                                                                      onTap:
+                                                                          () {
+                                                                        Navigator.pop(
+                                                                            context);
+                                                                      },
+                                                                      child:
+                                                                          Container(
+                                                                        height:
+                                                                            40,
+                                                                        width: width *
+                                                                            0.3,
+                                                                        decoration: BoxDecoration(
+                                                                            border:
+                                                                                Border.all(color: yellow),
+                                                                            borderRadius: BorderRadius.circular(6)),
+                                                                        child:
+                                                                            Center(
+                                                                          child:
+                                                                              Text(
+                                                                            'Cancel',
+                                                                            style:
+                                                                                bodyText14Bold(color: black),
+                                                                          ),
+                                                                        ),
+                                                                      ),
+                                                                    ),
+                                                                    addHorizontalySpace(
+                                                                        20),
+                                                                    InkWell(
+                                                                      onTap:
+                                                                          () async {
+                                                                        await FirebaseFirestore
+                                                                            .instance
+                                                                            .collection("users")
+                                                                            .doc(widget.owner)
+                                                                            .collection("Batches")
+                                                                            .doc(batchDocIds[widget.index])
+                                                                            .collection("BatchData")
+                                                                            .doc("Income")
+                                                                            .set({
+                                                                          "incomeDetails": incomeDetails.sublist(0, index) +
+                                                                              incomeDetails.sublist(
+                                                                                index + 1,
+                                                                              ),
+                                                                        });
+
+                                                                        await FirebaseFirestore
+                                                                            .instance
+                                                                            .collection("users")
+                                                                            .doc(widget.owner)
+                                                                            .collection("Batches")
+                                                                            .doc(batchDocIds[widget.index])
+                                                                            .set({
+                                                                          "Sold":
+                                                                              FieldValue.increment(-incomeDetails[index]["Quantity"]),
+                                                                        }, SetOptions(merge: true));
+
+                                                                        Fluttertoast.showToast(
+                                                                            msg:
+                                                                                "Deletion successful!");
+
+                                                                        Navigator.pop(
+                                                                            context,
+                                                                            true);
+                                                                      },
+                                                                      child:
+                                                                          Container(
+                                                                        height:
+                                                                            40,
+                                                                        width: width *
+                                                                            0.3,
+                                                                        decoration: BoxDecoration(
+                                                                            color:
+                                                                                red,
+                                                                            borderRadius:
+                                                                                BorderRadius.circular(6)),
+                                                                        child:
+                                                                            Center(
+                                                                          child:
+                                                                              Text(
+                                                                            'Delete',
+                                                                            style:
+                                                                                bodyText14Bold(color: Colors.white),
+                                                                          ),
+                                                                        ),
+                                                                      ),
+                                                                    ),
+                                                                  ],
+                                                                ),
+                                                              ],
+                                                            ),
+                                                          );
+                                                        },
+                                                      ));
+                                                }).then((value) {
+                                              if (value == null) {
+                                                return;
+                                              } else {
+                                                if (value) {
+                                                  getIncomeDetails();
+                                                }
+                                              }
+                                            }),
+                                            child: ImageIcon(
+                                              AssetImage(
+                                                  "assets/images/delete.png"),
+                                            ),
+                                          ),
                                           //Image.asset("assets/images/delete.png"),
                                         ],
                                       ),

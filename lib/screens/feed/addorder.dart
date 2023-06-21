@@ -187,8 +187,18 @@ class _AddOrderPageState extends State<AddOrderPage> {
                   addHorizontalySpace(15),
                   InkWell(
                     onTap: () {
-                      Navigator.push(context,
-                          MaterialPageRoute(builder: (ctx) => AddFeedType()));
+                      Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                              builder: (ctx) => AddFeedType())).then((value) {
+                        if (value == null) {
+                          return;
+                        } else {
+                          if (value) {
+                            getFeedType();
+                          }
+                        }
+                      });
                     },
                     child: Container(
                       height: 58,
@@ -208,7 +218,7 @@ class _AddOrderPageState extends State<AddOrderPage> {
                 controller: companyController,
               ),
               CustomTextField(
-                hintText: "Bag Size",
+                hintText: "Bag Size in KG (Ex. 50)",
                 controller: weightController,
                 textType: TextInputType.number,
               ),
@@ -318,7 +328,7 @@ class _AddOrderPageState extends State<AddOrderPage> {
                                     ["feedType"],
                                 "feedCompany": value.data()!["order${i + 1}"]
                                     ["feedCompany"],
-                                "feedWeight": double.tryParse(value
+                                "feedWeight": int.parse(value
                                     .data()!["order${i + 1}"]["feedWeight"]
                                     .toString()),
                                 "feedQuantity": int.parse(value
@@ -344,8 +354,7 @@ class _AddOrderPageState extends State<AddOrderPage> {
                                 "date": date.text,
                                 "feedType": type,
                                 "feedCompany": companyController.text,
-                                "feedWeight":
-                                    double.tryParse(weightController.text),
+                                "feedWeight": int.parse(weightController.text),
                                 "feedQuantity": quantity,
                                 "originalQuantity": quantity,
                                 "feedPrice": price,
@@ -361,7 +370,7 @@ class _AddOrderPageState extends State<AddOrderPage> {
                                     ["feedType"],
                                 "feedCompany": value.data()!["order${i + 1}"]
                                     ["feedCompany"],
-                                "feedWeight": double.tryParse(value
+                                "feedWeight": int.parse(value
                                     .data()!["order${i + 1}"]["feedWeight"]
                                     .toString()),
                                 "feedQuantity": int.parse(value
@@ -398,6 +407,8 @@ class _AddOrderPageState extends State<AddOrderPage> {
                           .set(updatedMap);
 
                       Fluttertoast.showToast(msg: "Data updated successfully!");
+
+                      Navigator.pop(context, true);
                     } else {
                       print(option);
                       if (date.text.isEmpty ||
@@ -416,8 +427,7 @@ class _AddOrderPageState extends State<AddOrderPage> {
                               "date": date.text,
                               "feedType": type,
                               "feedCompany": companyController.text,
-                              "feedWeight":
-                                  double.tryParse(weightController.text),
+                              "feedWeight": int.tryParse(weightController.text),
                               "feedQuantity": quantity,
                               "originalQuantity": quantity,
                               "feedPrice": price,
@@ -449,7 +459,7 @@ class _AddOrderPageState extends State<AddOrderPage> {
                       }
                       Future.delayed(Duration(seconds: 2), () {
                         Navigator.pop(context);
-                        Navigator.pop(context);
+                        Navigator.pop(context, true);
                       });
                     }
                   })

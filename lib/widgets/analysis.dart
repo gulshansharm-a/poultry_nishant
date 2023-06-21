@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:poultry_app/utils/constants.dart';
 import 'package:poultry_app/widgets/navigation.dart';
+import 'package:intl/intl.dart';
 
 class AnalysisWidget extends StatefulWidget {
   String owner;
@@ -20,6 +21,11 @@ class AnalysisWidget extends StatefulWidget {
 
 class _AnalysisWidgetState extends State<AnalysisWidget> {
   double totalQuantity = 0.0;
+  double perBirdIntake = 0.0;
+  double avgBodyWeight = 0.0;
+  double expensesDiluted = 0.0;
+  double feedToday = 0.0;
+  double totalProfit = 0.0;
   int loadStatus = 0;
   List analysis = [
     {
@@ -96,6 +102,20 @@ class _AnalysisWidgetState extends State<AnalysisWidget> {
           //     });
           //   }
           // }
+          if (value.data()!["incomeDetails"][i]["IncomeCategory"] ==
+              "Chicken") {
+            setState(() {
+              totalProfit += (double.parse(value
+                      .data()!["incomeDetails"][i]["BillAmount"]
+                      .toString()) -
+                  (int.parse(value
+                          .data()!["incomeDetails"][i]["Quantity"]
+                          .toString()) *
+                      double.parse(value
+                          .data()!["incomeDetails"][i]["CostPerBird"]
+                          .toString())));
+            });
+          }
           setState(() {
             income += double.parse(
                 value.data()!["incomeDetails"][i]["BillAmount"].toString());
@@ -178,9 +198,31 @@ class _AnalysisWidgetState extends State<AnalysisWidget> {
 
           setState(() {
             totalFeedPrice += double.parse(
-                    value.data()!["feedServed"][i]["feedQuantity"].toString()) *
-                double.parse(
-                    value.data()!["feedServed"][i]["priceForFeed"].toString());
+                value.data()!["feedServed"][i]["priceForFeed"].toString());
+          });
+        }
+      }
+    });
+
+    await FirebaseFirestore.instance
+        .collection("users")
+        .doc(widget.owner)
+        .collection("Batches")
+        .doc(widget.batchId)
+        .collection("BatchData")
+        .doc("Expenses")
+        .get()
+        .then((value) {
+      if (value.exists) {
+        for (int i = 0; i < value.data()!["expenseDetails"].length; i++) {
+          setState(() {
+            if (value.data()!["expenseDetails"][i]["Expenses Category"] !=
+                    "Chicks" &&
+                value.data()!["expenseDetails"][i]["Expenses Category"] !=
+                    "Feed Served") {
+              expensesDiluted += double.parse(
+                  value.data()!["expenseDetails"][i]["Amount"].toString());
+            }
           });
         }
       }
@@ -211,16 +253,21 @@ class _AnalysisWidgetState extends State<AnalysisWidget> {
       });
     });
     double updatedPrice = originalPrice + (totalFeedPrice / netBirds);
-    updatedPrice += (updatedPrice * mortality) / netBirds;
+    setState(() {
+      updatedPrice += (updatedPrice * mortality) / netBirds;
+      updatedPrice += (expensesDiluted) / netBirds;
+    });
     if (netBirds == 0) {
-      updatedPrice = originalPrice;
+      setState(() {
+        updatedPrice = originalPrice;
+      });
     }
     print(updatedPrice);
     setState(() {
       analysis[1]["c1data1"] =
           netBirds == 0 ? "Rs. 0" : "Rs. ${updatedPrice.toStringAsFixed(2)}";
       analysis[1]["c3data1"] =
-          "Rs. ${((updatedPrice * int.parse(analysis[1]["c2data1"].toString())) - (originalPrice * int.parse(analysis[1]["c2data1"].toString()))).ceil()}"; //profit on sold birds
+          "Rs. ${totalProfit.toStringAsFixed(2)}"; //profit on sold birds
     });
 
     // for(var keys in incomeMap.keys.toList()){
@@ -250,11 +297,17 @@ class _AnalysisWidgetState extends State<AnalysisWidget> {
         .then((value) {
       if (value.exists) {
         for (int i = 0; i < value.data()!["feedServed"].length; i++) {
+          if (value.data()!["feedServed"][i]["date"] ==
+              DateFormat("dd/MMM/yyyy")
+                  .format(DateTime.now())
+                  .toString()
+                  .toLowerCase()) {
+            feedToday += double.parse(
+                value.data()!["feedServed"][i]["feedQuantity"].toString());
+          }
           setState(() {
             priceSubTotal += double.parse(
-                    value.data()!["feedServed"][i]["feedQuantity"].toString()) *
-                double.parse(
-                    value.data()!["feedServed"][i]["priceForFeed"].toString());
+                value.data()!["feedServed"][i]["priceForFeed"].toString());
             feedQuantity += double.parse(
                 value.data()!["feedServed"][i]["feedQuantity"].toString());
             totalQuantity += double.parse(
@@ -289,9 +342,11 @@ class _AnalysisWidgetState extends State<AnalysisWidget> {
           ? "0"
           : "Rs. ${(priceSubTotal / netBirds).toStringAsFixed(2)}";
 
+      perBirdIntake = (feedToday * 1000) / netBirds;
+
       analysis[3]["c1data1"] = netBirds == 0
           ? "0 gms"
-          : "${((feedQuantity * 1000) / netBirds).toStringAsFixed(2)} gms";
+          : "${((feedToday * 1000) / netBirds).toStringAsFixed(2)} gms";
     });
     setState(() {
       loadStatus += 1;
@@ -302,7 +357,7 @@ class _AnalysisWidgetState extends State<AnalysisWidget> {
     if (!mounted) return;
     double avgWeight = 0.0;
     int netBirds = 0;
-    int length = 1;
+    int length = 0;
 
     await FirebaseFirestore.instance
         .collection("users")
@@ -314,14 +369,15 @@ class _AnalysisWidgetState extends State<AnalysisWidget> {
         .get()
         .then((value) {
       if (value.exists) {
-        setState(() {
-          length = value.data()!["weightDetails"].length;
-        });
         for (int i = 0; i < value.data()!["weightDetails"].length; i++) {
-          setState(() {
-            avgWeight += double.parse(
-                value.data()!["weightDetails"][i]["bodyWeight"].toString());
-          });
+          if (value.data()!["weightDetails"][i]["date"] ==
+              DateFormat("dd/MMM/yyyy").format(DateTime.now()).toLowerCase()) {
+            setState(() {
+              length += 1;
+              avgWeight += double.parse(
+                  value.data()!["weightDetails"][i]["bodyWeight"].toString());
+            });
+          }
         }
         print(avgWeight);
       }
@@ -344,11 +400,21 @@ class _AnalysisWidgetState extends State<AnalysisWidget> {
     });
 
     setState(() {
-      analysis[3]["c2data1"] = "${(avgWeight / length)} gms";
+      print("Avg Weight : $avgWeight");
+      print("length: $length");
+      if (length == 0) {
+        avgBodyWeight = 0;
+      } else {
+        avgBodyWeight = avgWeight / length;
+      }
 
-      analysis[3]["c3data1"] = netBirds == 0
+      perBirdIntake = (feedToday * 1000) / netBirds;
+
+      analysis[3]["c2data1"] = "${avgBodyWeight} gms";
+
+      analysis[3]["c3data1"] = netBirds == 0 || avgBodyWeight == 0
           ? "0"
-          : "${(totalQuantity / netBirds).toStringAsFixed(2)}";
+          : "${(perBirdIntake / avgBodyWeight).toStringAsFixed(2)}";
     });
 
     setState(() {

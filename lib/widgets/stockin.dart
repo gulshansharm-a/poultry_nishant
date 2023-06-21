@@ -39,7 +39,7 @@ class _StockInWidgetState extends State<StockInWidget> {
         setState(() {
           feedType = value.data()?['feedType'];
         });
-      }       
+      }
     });
   }
 
@@ -267,174 +267,181 @@ class _StockInWidgetState extends State<StockInWidget> {
                     .doc(batchDocIds[index])
                     .get()
                     .then((value) async {
-                  int currentStock = stockForType;
+                  if (quantityButton.current == 0) {
+                    Fluttertoast.showToast(msg: "Cannot transfer 0 quantity!");
+                  } else {
+                    int currentStock = stockForType;
 
-                  if (currentStock > 0) {
-                    setState(() {
-                      quantityToTransfer = quantityButton.current;
-                    });
+                    if (currentStock > 0) {
+                      setState(() {
+                        quantityToTransfer = quantityButton.current;
+                      });
 
-                    for (var key in availableStockDetails.keys) {
-                      print(key);
-                      if (quantityToTransfer > 0 &&
-                          availableStockDetails[key] > 0) {
-                        // 20 -> 10
-                        if (availableStockDetails[key] >= quantityToTransfer) {
-                          await FirebaseFirestore.instance
-                              .collection('inventory')
-                              .doc(FirebaseAuth.instance.currentUser!.uid)
-                              .set({
-                            key: {
-                              "feedQuantity":
-                                  FieldValue.increment(quantityToTransfer),
-                            }
-                          }, SetOptions(merge: true));
-
-                          await FirebaseFirestore.instance
-                              .collection('users')
-                              .doc(FirebaseAuth.instance.currentUser!.uid)
-                              .collection('Batches')
-                              .doc(batchDocIds[index])
-                              .set({
-                            "feedTypeQuantity": {
-                              feed: {
-                                key: FieldValue.increment(-quantityToTransfer),
+                      for (var key in availableStockDetails.keys) {
+                        print(key);
+                        if (quantityToTransfer > 0 &&
+                            availableStockDetails[key] > 0) {
+                          // 20 -> 10
+                          if (availableStockDetails[key] >=
+                              quantityToTransfer) {
+                            await FirebaseFirestore.instance
+                                .collection('inventory')
+                                .doc(FirebaseAuth.instance.currentUser!.uid)
+                                .set({
+                              key: {
+                                "feedQuantity":
+                                    FieldValue.increment(quantityToTransfer),
                               }
-                            }
-                          }, SetOptions(merge: true));
+                            }, SetOptions(merge: true));
 
-                          setState(() {
-                            availableStockDetails[key] -= quantityToTransfer;
-                            quantityToTransfer = 0;
-                          });
-
-                          break;
-                        } else {
-                          // 10 - 11
-                          await FirebaseFirestore.instance
-                              .collection('inventory')
-                              .doc(FirebaseAuth.instance.currentUser!.uid)
-                              .set({
-                            key: {
-                              "feedQuantity": FieldValue.increment(
-                                  availableStockDetails[key]),
-                            }
-                          }, SetOptions(merge: true));
-
-                          await FirebaseFirestore.instance
-                              .collection('users')
-                              .doc(FirebaseAuth.instance.currentUser!.uid)
-                              .collection('Batches')
-                              .doc(batchDocIds[index])
-                              .set({
-                            "feedTypeQuantity": {
-                              feed: {
-                                key: FieldValue.increment(
-                                    -availableStockDetails[key]),
+                            await FirebaseFirestore.instance
+                                .collection('users')
+                                .doc(FirebaseAuth.instance.currentUser!.uid)
+                                .collection('Batches')
+                                .doc(batchDocIds[index])
+                                .set({
+                              "feedTypeQuantity": {
+                                feed: {
+                                  key:
+                                      FieldValue.increment(-quantityToTransfer),
+                                }
                               }
-                            }
-                          }, SetOptions(merge: true));
+                            }, SetOptions(merge: true));
 
-                          setState(() {
-                            availableStockDetails[key] = 0;
-                            quantityToTransfer -= int.parse(
-                                availableStockDetails[key].toString());
-                          });
+                            setState(() {
+                              availableStockDetails[key] -= quantityToTransfer;
+                              quantityToTransfer = 0;
+                            });
+
+                            break;
+                          } else {
+                            // 10 - 11
+                            await FirebaseFirestore.instance
+                                .collection('inventory')
+                                .doc(FirebaseAuth.instance.currentUser!.uid)
+                                .set({
+                              key: {
+                                "feedQuantity": FieldValue.increment(
+                                    availableStockDetails[key]),
+                              }
+                            }, SetOptions(merge: true));
+
+                            await FirebaseFirestore.instance
+                                .collection('users')
+                                .doc(FirebaseAuth.instance.currentUser!.uid)
+                                .collection('Batches')
+                                .doc(batchDocIds[index])
+                                .set({
+                              "feedTypeQuantity": {
+                                feed: {
+                                  key: FieldValue.increment(
+                                      -availableStockDetails[key]),
+                                }
+                              }
+                            }, SetOptions(merge: true));
+
+                            setState(() {
+                              availableStockDetails[key] = 0;
+                              quantityToTransfer -= int.parse(
+                                  availableStockDetails[key].toString());
+                            });
+                          }
                         }
                       }
+
+                      // await FirebaseFirestore.instance
+                      //     .collection('users')
+                      //     .doc(FirebaseAuth.instance.currentUser!.uid)
+                      //     .collection('Batches')
+                      //     .doc(batchDocIds[index])
+                      //     .set({
+                      //   "feedTypeQuantity": availableStockDetails,
+                      // });
+
+                      // await FirebaseFirestore.instance
+                      //     .collection('inventory')
+                      //     .doc(FirebaseAuth.instance.currentUser!.uid)
+                      //     .get()
+                      //     .then((value) async {
+                      //   for (int i = value.data()!.length - 1; i >= 0; i--) {
+                      //     if (quantityToTransfer <= 0) {
+                      //       break;
+                      //     } else {
+                      //       if (value.data()!["order${i + 1}"]["feedType"] ==
+                      //               feed &&
+                      //           (int.parse(value
+                      //                   .data()!["order${i + 1}"]["feedQuantity"]
+                      //                   .toString()) <
+                      //               int.parse(value
+                      //                   .data()!["order${i + 1}"]
+                      //                       ["originalQuantity"]
+                      //                   .toString()))) {
+                      //         int getDifference = int.parse(value
+                      //                 .data()!["order${i + 1}"]
+                      //                     ["originalQuantity"]
+                      //                 .toString()) -
+                      //             int.parse(value
+                      //                 .data()!["order${i + 1}"]["feedQuantity"]
+                      //                 .toString());
+
+                      //         if (quantityToTransfer > getDifference) {
+                      //           await FirebaseFirestore.instance
+                      //               .collection('inventory')
+                      //               .doc(FirebaseAuth.instance.currentUser!.uid)
+                      //               .set(
+                      //             {
+                      //               "order${i + 1}": {
+                      //                 "feedQuantity": FieldValue.increment(
+                      //                     quantityToTransfer - getDifference),
+                      //               },
+                      //             },
+                      //             SetOptions(merge: true),
+                      //           );
+                      //           setState(() {
+                      //             quantityToTransfer -= getDifference;
+                      //             print(getDifference);
+                      //             print(quantityToTransfer);
+                      //           });
+                      //         } else {
+                      //           await FirebaseFirestore.instance
+                      //               .collection('inventory')
+                      //               .doc(FirebaseAuth.instance.currentUser!.uid)
+                      //               .set(
+                      //             {
+                      //               "order${i + 1}": {
+                      //                 "feedQuantity": FieldValue.increment(
+                      //                     quantityToTransfer),
+                      //               },
+                      //             },
+                      //             SetOptions(merge: true),
+                      //           );
+                      //           setState(() {
+                      //             quantityToTransfer -= quantityToTransfer;
+                      //             print(getDifference);
+                      //             print(quantityToTransfer);
+                      //           });
+                      //         }
+                      //       }
+                      //     }
+                      //   }
+                      // });
                     }
-
-                    // await FirebaseFirestore.instance
-                    //     .collection('users')
-                    //     .doc(FirebaseAuth.instance.currentUser!.uid)
-                    //     .collection('Batches')
-                    //     .doc(batchDocIds[index])
-                    //     .set({
-                    //   "feedTypeQuantity": availableStockDetails,
-                    // });
-
-                    // await FirebaseFirestore.instance
-                    //     .collection('inventory')
-                    //     .doc(FirebaseAuth.instance.currentUser!.uid)
-                    //     .get()
-                    //     .then((value) async {
-                    //   for (int i = value.data()!.length - 1; i >= 0; i--) {
-                    //     if (quantityToTransfer <= 0) {
-                    //       break;
-                    //     } else {
-                    //       if (value.data()!["order${i + 1}"]["feedType"] ==
-                    //               feed &&
-                    //           (int.parse(value
-                    //                   .data()!["order${i + 1}"]["feedQuantity"]
-                    //                   .toString()) <
-                    //               int.parse(value
-                    //                   .data()!["order${i + 1}"]
-                    //                       ["originalQuantity"]
-                    //                   .toString()))) {
-                    //         int getDifference = int.parse(value
-                    //                 .data()!["order${i + 1}"]
-                    //                     ["originalQuantity"]
-                    //                 .toString()) -
-                    //             int.parse(value
-                    //                 .data()!["order${i + 1}"]["feedQuantity"]
-                    //                 .toString());
-
-                    //         if (quantityToTransfer > getDifference) {
-                    //           await FirebaseFirestore.instance
-                    //               .collection('inventory')
-                    //               .doc(FirebaseAuth.instance.currentUser!.uid)
-                    //               .set(
-                    //             {
-                    //               "order${i + 1}": {
-                    //                 "feedQuantity": FieldValue.increment(
-                    //                     quantityToTransfer - getDifference),
-                    //               },
-                    //             },
-                    //             SetOptions(merge: true),
-                    //           );
-                    //           setState(() {
-                    //             quantityToTransfer -= getDifference;
-                    //             print(getDifference);
-                    //             print(quantityToTransfer);
-                    //           });
-                    //         } else {
-                    //           await FirebaseFirestore.instance
-                    //               .collection('inventory')
-                    //               .doc(FirebaseAuth.instance.currentUser!.uid)
-                    //               .set(
-                    //             {
-                    //               "order${i + 1}": {
-                    //                 "feedQuantity": FieldValue.increment(
-                    //                     quantityToTransfer),
-                    //               },
-                    //             },
-                    //             SetOptions(merge: true),
-                    //           );
-                    //           setState(() {
-                    //             quantityToTransfer -= quantityToTransfer;
-                    //             print(getDifference);
-                    //             print(quantityToTransfer);
-                    //           });
-                    //         }
-                    //       }
-                    //     }
-                    //   }
-                    // });
                   }
                 });
+                if (quantityButton.current != 0) {
+                  showDialog(
+                      context: context,
+                      builder: (context) => ShowDialogBox(
+                            message: "Feed Received!!",
+                            subMessage: '',
+                            isShowAds: false,
+                          ));
 
-                showDialog(
-                    context: context,
-                    builder: (context) => ShowDialogBox(
-                          message: "Feed Received!!",
-                          subMessage: '',
-                          isShowAds: false,
-                        ));
-
-                Future.delayed(Duration(seconds: 1), () {
-                  Navigator.pop(context, true);
-                  Navigator.pop(context, true);
-                });
+                  Future.delayed(Duration(seconds: 1), () {
+                    Navigator.pop(context, true);
+                    Navigator.pop(context, true);
+                  });
+                }
               })
         ],
       ),

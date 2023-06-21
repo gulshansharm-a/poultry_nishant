@@ -43,7 +43,7 @@ class ShowDialogBox extends StatelessWidget {
                 : addVerticalSpace(0),
             subMessage != null
                 ? addVerticalSpace(0)
-                : isShowAds == false
+                : isShowAds == true
                     ? Padding(
                         padding: const EdgeInsets.only(top: 20),
                         child: CustomButton(

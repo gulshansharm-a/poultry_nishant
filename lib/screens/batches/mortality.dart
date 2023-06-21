@@ -352,18 +352,18 @@ class _MortalityPageState extends State<MortalityPage> {
                     const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
                 child: Row(
                   children: [
-                    Expanded(
-                      child: CustomDropdown(
-                        hp: 5,
-                        list: list,
-                        radius: 6,
-                        height: 30,
-                        hint: "select date",
-                        textStyle: bodyText12w600(color: darkGray),
-                        iconSize: 10,
-                        bcolor: darkGray,
-                      ),
-                    ),
+                    // Expanded(
+                    //   child: CustomDropdown(
+                    //     hp: 5,
+                    //     list: list,
+                    //     radius: 6,
+                    //     height: 30,
+                    //     hint: "select date",
+                    //     textStyle: bodyText12w600(color: darkGray),
+                    //     iconSize: 10,
+                    //     bcolor: darkGray,
+                    //   ),
+                    // ),
                     addHorizontalySpace(10),
                     Expanded(
                       child: Container(

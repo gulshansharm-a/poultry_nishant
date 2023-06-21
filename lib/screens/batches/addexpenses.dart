@@ -21,6 +21,7 @@ class AddExpensesPage extends StatefulWidget {
   String? description;
   List? upto;
   List? after;
+  bool? containsChicks = false;
 
   AddExpensesPage({
     super.key,
@@ -33,6 +34,7 @@ class AddExpensesPage extends StatefulWidget {
     this.expensesCategory,
     this.upto,
     this.after,
+    this.containsChicks,
   });
 
   @override
@@ -68,6 +70,9 @@ class _AddExpensesPageState extends State<AddExpensesPage> {
       if (value.exists) {
         setState(() {
           expenseType = value.data()?['expenseType'] ?? [];
+          if (expenseType.contains("Chicks") && widget.containsChicks == true) {
+            expenseType.remove("Chicks");
+          }
         });
       } else {
         setState(() {
@@ -309,46 +314,190 @@ class _AddExpensesPageState extends State<AddExpensesPage> {
                           Navigator.pop(context, true);
                         }
                       } else {
-                        if (_formKey.currentState!.validate()) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text('Processing Data')),
-                          );
+                        if (expenseTypeString == "Chicks") {
+                          showDialog(
+                              context: context,
+                              builder: (context) {
+                                return AlertDialog(
+                                    contentPadding: const EdgeInsets.all(6),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(10.0),
+                                    ),
+                                    content: Builder(builder: (context) {
+                                      var height =
+                                          MediaQuery.of(context).size.height;
+                                      var width =
+                                          MediaQuery.of(context).size.width;
 
-                          await FirebaseFirestore.instance
-                              .collection('users')
-                              .doc(widget.owner)
-                              .collection("Batches")
-                              .doc(widget.docId)
-                              .collection("BatchData")
-                              .doc("Expenses")
-                              .set({
-                            "expenseDetails": FieldValue.arrayUnion([
-                              {
-                                'Date': dateController.text.toString(),
-                                'Expenses Category': expenseTypeString,
-                                'Amount': expenseTypeString == "Chicks"
-                                    ? double.parse(
-                                            amountController.text.toString()) *
-                                        noChicks
-                                    : double.parse(
-                                        amountController.text.toString()),
-                                'Description':
-                                    descriptionController.text.toString(),
-                              }
-                            ])
-                          }, SetOptions(merge: true));
+                                      return Container(
+                                        height: height * 0.2,
+                                        padding: EdgeInsets.all(
+                                          10.0,
+                                        ),
+                                        child: Column(
+                                          children: [
+                                            // SizedBox(
+                                            //   height: 20.0,
+                                            // ),
+                                            Center(
+                                              child: Text(
+                                                "This action is not reversible. Are you sure you want to continue?",
+                                                textAlign: TextAlign.center,
+                                                style: bodyText16Bold(
+                                                  color: black,
+                                                ),
+                                              ),
+                                            ),
+                                            Spacer(),
+                                            Row(
+                                              mainAxisAlignment:
+                                                  MainAxisAlignment.center,
+                                              children: [
+                                                InkWell(
+                                                  onTap: () {
+                                                    Navigator.pop(context);
+                                                  },
+                                                  child: Container(
+                                                    height: 40,
+                                                    width: width * 0.3,
+                                                    decoration: BoxDecoration(
+                                                        border: Border.all(
+                                                            color: yellow),
+                                                        borderRadius:
+                                                            BorderRadius
+                                                                .circular(6)),
+                                                    child: Center(
+                                                      child: Text(
+                                                        'Cancel',
+                                                        style: bodyText14Bold(
+                                                            color: black),
+                                                      ),
+                                                    ),
+                                                  ),
+                                                ),
+                                                addHorizontalySpace(20),
+                                                InkWell(
+                                                  onTap: () async {
+                                                    if (_formKey.currentState!
+                                                        .validate()) {
+                                                      ScaffoldMessenger.of(
+                                                              context)
+                                                          .showSnackBar(
+                                                        const SnackBar(
+                                                            content: Text(
+                                                                'Processing Data')),
+                                                      );
 
-                          if (expenseTypeString == "Chicks") {
+                                                      await FirebaseFirestore
+                                                          .instance
+                                                          .collection('users')
+                                                          .doc(widget.owner)
+                                                          .collection("Batches")
+                                                          .doc(widget.docId)
+                                                          .collection(
+                                                              "BatchData")
+                                                          .doc("Expenses")
+                                                          .set(
+                                                              {
+                                                            "expenseDetails":
+                                                                FieldValue
+                                                                    .arrayUnion([
+                                                              {
+                                                                'Date': dateController
+                                                                    .text
+                                                                    .toString(),
+                                                                'Expenses Category':
+                                                                    expenseTypeString,
+                                                                'Amount': double.parse(
+                                                                        amountController
+                                                                            .text
+                                                                            .toString()) *
+                                                                    noChicks,
+                                                                'Description':
+                                                                    descriptionController
+                                                                        .text
+                                                                        .toString(),
+                                                              }
+                                                            ])
+                                                          },
+                                                              SetOptions(
+                                                                  merge: true));
+
+                                                      await FirebaseFirestore
+                                                          .instance
+                                                          .collection("users")
+                                                          .doc(widget.owner)
+                                                          .collection("Batches")
+                                                          .doc(widget.docId)
+                                                          .set(
+                                                              {
+                                                            "CostPerBird":
+                                                                amountController
+                                                                    .text
+                                                                    .toString(),
+                                                          },
+                                                              SetOptions(
+                                                                  merge: true));
+                                                      Navigator.pop(
+                                                          context, true);
+                                                      Navigator.pop(
+                                                          context, true);
+                                                    }
+                                                  },
+                                                  child: Container(
+                                                    height: 40,
+                                                    width: width * 0.3,
+                                                    decoration: BoxDecoration(
+                                                        color: yellow,
+                                                        border: Border.all(
+                                                            color: yellow),
+                                                        borderRadius:
+                                                            BorderRadius
+                                                                .circular(6)),
+                                                    child: Center(
+                                                      child: Text(
+                                                        'Continue',
+                                                        style: bodyText14Bold(
+                                                            color: black),
+                                                      ),
+                                                    ),
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                          ],
+                                        ),
+                                      );
+                                    }));
+                              });
+                        } else {
+                          if (_formKey.currentState!.validate()) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(content: Text('Processing Data')),
+                            );
+
                             await FirebaseFirestore.instance
-                                .collection("users")
+                                .collection('users')
                                 .doc(widget.owner)
                                 .collection("Batches")
                                 .doc(widget.docId)
+                                .collection("BatchData")
+                                .doc("Expenses")
                                 .set({
-                              "CostPerBird": amountController.text.toString(),
+                              "expenseDetails": FieldValue.arrayUnion([
+                                {
+                                  'Date': dateController.text.toString(),
+                                  'Expenses Category': expenseTypeString,
+                                  'Amount': double.parse(
+                                      amountController.text.toString()),
+                                  'Description':
+                                      descriptionController.text.toString(),
+                                }
+                              ])
                             }, SetOptions(merge: true));
+
+                            Navigator.pop(context, true);
                           }
-                          Navigator.pop(context, true);
                         }
                       }
                     },

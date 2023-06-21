@@ -41,25 +41,6 @@ class _FeedServedPageState extends State<FeedServedPage> {
   double requirement = 0.0;
   DateTime batchDate = DateTime.utc(1800, 01, 01);
 
-  Future<void> getFeedType() async {
-    setState(() {
-      isLoading = true;
-    });
-    await FirebaseFirestore.instance
-        .collection('users')
-        .doc(FirebaseAuth.instance.currentUser!.uid)
-        .collection("settings")
-        .doc("Feed Type")
-        .get()
-        .then((value) async {
-      if (value.exists) {
-        setState(() {
-          list = value.data()?['feedType'];
-        });
-      }
-    });
-  }
-
   Future<void> getBatchDetails() async {
     setState(() {
       isLoading = true;
@@ -72,8 +53,9 @@ class _FeedServedPageState extends State<FeedServedPage> {
         .doc(widget.docId)
         .get()
         .then((value) {
+      print(value.data());
       setState(() {
-        breed = value.data()!["Breed"];
+        breed = value.data()!["Breed"].toString();
         noBirds = (int.parse(value.data()!["NoOfBirds"].toString()) -
             int.parse(value.data()!["Sold"].toString()) -
             int.parse(value.data()!["Mortality"].toString()));
@@ -125,6 +107,7 @@ class _FeedServedPageState extends State<FeedServedPage> {
         batchDate = DateTime.utc(year, month, day);
         print(batchDate);
       });
+      print("Type: $breed");
     });
 
     await FirebaseFirestore.instance
@@ -192,7 +175,6 @@ class _FeedServedPageState extends State<FeedServedPage> {
             "feedType": value.data()!["feedServed"][i]["feedType"],
             "feedServed": value.data()!["feedServed"][i]["feedQuantity"],
           });
-          
         }
 
         DateFormat inputFormat = DateFormat("dd/MM/yyyy");
@@ -204,6 +186,8 @@ class _FeedServedPageState extends State<FeedServedPage> {
       }
     });
 
+    getTodayFeedRequirement();
+
     setState(() {
       isLoading = false;
     });
@@ -213,21 +197,18 @@ class _FeedServedPageState extends State<FeedServedPage> {
 
   void initState() {
     super.initState();
-    getFeedType();
     getBatchDetails();
-    // getTodayFeedRequirement();
-    Fluttertoast.showToast(
-        msg: "Feed served will be entered in Expenses automatically!");
+
+    // Fluttertoast.showToast(
+    //     msg: "Feed served will be entered in Expenses automatically!");
   }
 
-  Future<void> getTodayFeedRequirement(String feedType) async {
+  Future<void> getTodayFeedRequirement() async {
     await FirebaseFirestore.instance
         .collection("users")
         .doc(FirebaseAuth.instance.currentUser!.uid)
         .collection("settings")
         .doc("Chick Feed Requirement")
-        .collection(breed)
-        .doc(feedType)
         .get()
         .then((value) {
       if (value.exists) {
@@ -237,19 +218,21 @@ class _FeedServedPageState extends State<FeedServedPage> {
                 .inDays +
             1;
         double requirementInGrams = 0.0;
-        for (int i = 0; i < value.data()!["dayDetails"].length; i++) {
-          if (int.parse(value.data()!["dayDetails"][i]["day"].toString()) ==
-              day) {
-            requirementInGrams += double.parse(
-                value.data()!["dayDetails"][i]["grams"].toString());
+        if (value.data()![breed] != null) {
+          for (int i = 0; i < value.data()![breed].length; i++) {
+            if (int.parse(value.data()![breed][i]["day"].toString()) == day) {
+              requirementInGrams +=
+                  double.parse(value.data()![breed][i]["grams"].toString());
+            }
           }
-        }
 
-        setState(() {
-          requirement = (requirementInGrams * noBirds) / 1000;
-        });
-      } else {
-        Fluttertoast.showToast(msg: "Data for the particulars doesn't exist!");
+          setState(() {
+            requirement = (requirementInGrams * noBirds) / 1000;
+          });
+        } else {
+          Fluttertoast.showToast(
+              msg: "Data for the particulars doesn't exist!");
+        }
       }
     });
   }
@@ -297,23 +280,8 @@ class _FeedServedPageState extends State<FeedServedPage> {
                   ),
                   Row(
                     children: [
-                      CustomDropdown(
-                        iconSize: 10,
-                        hp: 5,
-                        dropdownColor: white,
-                        bcolor: darkGray,
-                        hint: "Feed Type",
-                        height: 30,
-                        width: width(context) * .3,
-                        list: list,
-                        onchanged: (value) {
-                          if (value != null || value.length != 0) {
-                            getTodayFeedRequirement(value);
-                          }
-                        },
-                        textStyle: bodyText12w600(color: darkGray),
-                      ),
-                      addHorizontalySpace(15),
+                      // Spacer(),
+                      // // addHorizontalySpace(15),
                       Expanded(
                           child: CustomButton(
                               bcolor: darkGray,
@@ -401,10 +369,14 @@ class _FeedServedPageState extends State<FeedServedPage> {
               height: 0,
             ),
             addVerticalSpace(20),
-            Center(
-              child: Text(
-                "Feed served will be added to expenses automatically!",
-                style: bodyText14w500(color: darkGray),
+            Container(
+              width: width(context) * 0.85,
+              child: Center(
+                child: Text(
+                  "Feed served will be added to expenses automatically!",
+                  style: bodyText14w500(color: darkGray),
+                  textAlign: TextAlign.center,
+                ),
               ),
             ),
           ],

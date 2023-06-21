@@ -27,6 +27,7 @@ class AddIncomePage extends StatefulWidget {
   double? amountPaid;
   double? weight;
   int? quantity;
+  double? updatedPrice;
   double? amountDue;
   String? description;
   final int index;
@@ -52,6 +53,7 @@ class AddIncomePage extends StatefulWidget {
     this.weight,
     this.amountPaid,
     this.description,
+    this.updatedPrice,
     this.rate,
     this.isEdit,
     this.upto,
@@ -73,6 +75,7 @@ class _AddIncomePageState extends State<AddIncomePage> {
   // collection("AddIncome");
   bool isLoading = false;
   List incomeCategory = [];
+  int soldBefore = 0;
   int noChicks = 0;
   List paymentList = ['Cash', 'Online', 'Unpaid'];
   CollectionReference users = FirebaseFirestore.instance.collection('users');
@@ -80,6 +83,7 @@ class _AddIncomePageState extends State<AddIncomePage> {
   String? method;
   String batchType = "";
   int quantity = 0;
+  double updatedPrice = 0.0;
   double weight = 0.0;
   double rate = 0.0;
   double billAmount = 0.0;
@@ -143,6 +147,111 @@ class _AddIncomePageState extends State<AddIncomePage> {
         batchDate = DateTime.utc(year, month, day);
       });
     });
+  }
+
+  Future<void> getFinancialAnalysis() async {
+    int netBirds = 0;
+    double originalPrice = 0.0;
+    double totalFeedPrice = 0.0;
+    int mortality = 0;
+    double expensesDiluted = 0.0;
+    // Map feedData = {};
+
+    await FirebaseFirestore.instance
+        .collection("users")
+        .doc(widget.owner)
+        .collection("Batches")
+        .doc(batchDocIds[widget.index])
+        .collection("BatchData")
+        .doc("Feed Served")
+        .get()
+        .then((value) {
+      if (value.exists) {
+        for (int i = 0; i < value.data()!["feedServed"].length; i++) {
+          // if (feedData.containsKey(value.data()!["feedServed"][i]["date"])) {
+          //   setState(() {
+          //     feedData[value.data()!["feedServed"][i]["date"]] += (double.parse(
+          //             value.data()!["feedServed"][i]["feedPrice"].toString()) *
+          //         int.parse(value
+          //             .data()!["feedServed"][i]["feedQuantity"]
+          //             .toString()));
+          //   });
+          // } else {
+          //   setState(() {
+          //     feedData[value.data()!["feedServed"][i]["date"]] = (double.parse(
+          //             value.data()!["feedServed"][i]["feedPrice"].toString()) *
+          //         int.parse(value
+          //             .data()!["feedServed"][i]["feedQuantity"]
+          //             .toString()));
+          //   });
+          // }
+
+          setState(() {
+            totalFeedPrice += double.parse(
+                    value.data()!["feedServed"][i]["feedQuantity"].toString()) *
+                double.parse(
+                    value.data()!["feedServed"][i]["priceForFeed"].toString());
+          });
+        }
+      }
+    });
+
+    await FirebaseFirestore.instance
+        .collection("users")
+        .doc(widget.owner)
+        .collection("Batches")
+        .doc(batchDocIds[widget.index])
+        .collection("BatchData")
+        .doc("Expenses")
+        .get()
+        .then((value) {
+      if (value.exists) {
+        for (int i = 0; i < value.data()!["expenseDetails"].length; i++) {
+          setState(() {
+            if (value.data()!["expenseDetails"][i]["Expenses Category"] !=
+                    "Chicks" &&
+                value.data()!["expenseDetails"][i]["Expenses Category"] !=
+                    "Feed Served") {
+              expensesDiluted += double.parse(
+                  value.data()!["expenseDetails"][i]["Amount"].toString());
+            }
+          });
+        }
+      }
+    });
+
+    await FirebaseFirestore.instance
+        .collection("users")
+        .doc(widget.owner)
+        .collection("Batches")
+        .doc(batchDocIds[widget.index])
+        .get()
+        .then((value) {
+      setState(() {
+        mortality = int.parse(value.data()!["Mortality"].toString());
+      });
+      int sold = int.parse(value.data()!["Sold"].toString());
+      int noBirds = int.parse(value.data()!["NoOfBirds"].toString());
+
+      setState(() {
+        netBirds = noBirds - mortality - sold;
+        String costBird = value.data()!["CostPerBird"] ?? "";
+        if (costBird == "") {
+          originalPrice = 0;
+        } else {
+          originalPrice = double.parse(value.data()!["CostPerBird"].toString());
+        }
+      });
+    });
+    setState(() {
+      updatedPrice = originalPrice + (totalFeedPrice / netBirds);
+      updatedPrice += (updatedPrice * mortality) / netBirds;
+      updatedPrice += (expensesDiluted) / netBirds;
+      if (netBirds == 0) {
+        updatedPrice = originalPrice;
+      }
+    });
+    print(updatedPrice);
   }
 
   Future<void> getBatchType() async {
@@ -227,6 +336,7 @@ class _AddIncomePageState extends State<AddIncomePage> {
         isLoading = true;
       });
       setState(() {
+        soldBefore = widget.quantity!;
         dateController.text = widget.date!;
         quantity = widget.quantity!;
         quantityController.text = quantity.toString();
@@ -259,6 +369,7 @@ class _AddIncomePageState extends State<AddIncomePage> {
           DateFormat("dd/MMM/yyyy").format(DateTime.now()).toLowerCase();
     }
     getBatchType();
+    getFinancialAnalysis();
   }
 
   final nameController = TextEditingController();
@@ -409,7 +520,10 @@ class _AddIncomePageState extends State<AddIncomePage> {
                                           } else {
                                             setState(() {
                                               quantity = int.parse(value);
-                                              billAmount = quantity * rate;
+                                              billAmount =
+                                                  batchType == "Chicken"
+                                                      ? weight * rate
+                                                      : quantity * rate;
                                               billAmountController.text =
                                                   billAmount.toString();
                                               due = billAmount;
@@ -448,7 +562,7 @@ class _AddIncomePageState extends State<AddIncomePage> {
                                                   weight = double.parse(value);
                                                   billAmount =
                                                       batchType == "Chicken"
-                                                          ? quantity * rate
+                                                          ? weight * rate
                                                           : quantity * rate;
                                                   due = billAmount;
                                                   amountDueController.text =
@@ -488,7 +602,11 @@ class _AddIncomePageState extends State<AddIncomePage> {
                                           } else {
                                             setState(() {
                                               rate = double.parse(value);
-                                              billAmount = quantity * rate;
+
+                                              billAmount =
+                                                  batchType == "Chicken"
+                                                      ? weight * rate
+                                                      : quantity * rate;
                                               billAmountController.text =
                                                   billAmount.toString();
                                               due = billAmount;
@@ -625,199 +743,263 @@ class _AddIncomePageState extends State<AddIncomePage> {
                                 text:
                                     widget.isEdit! ? "Edit Details" : "Cash In",
                                 onClick: () async {
-                                  if (widget.isEdit == true) {
-                                    if (_formKey.currentState!.validate()) {
-                                      print("edit!");
-                                      DateTime incomeDate = DateTime.now();
-                                      List date = dateController.text
-                                          .toString()
-                                          .split("/");
-                                      int month = 0;
-                                      int day = int.parse(date[0]);
-                                      switch (date[1]) {
-                                        case "jan":
-                                          month = 1;
-                                          break;
-                                        case "feb":
-                                          month = 2;
-                                          break;
-                                        case "mar":
-                                          month = 3;
-                                          break;
-                                        case "apr":
-                                          month = 4;
-                                          break;
-                                        case "may":
-                                          month = 5;
-                                          break;
-                                        case "jun":
-                                          month = 6;
-                                          break;
-                                        case "jul":
-                                          month = 7;
-                                          break;
-                                        case "aug":
-                                          month = 8;
-                                          break;
-                                        case "sep":
-                                          month = 9;
-                                          break;
-                                        case "oct":
-                                          month = 10;
-                                          break;
-                                        case "nov":
-                                          month = 11;
-                                          break;
-                                        case "dec":
-                                          month = 12;
-                                          break;
-                                      }
-                                      int year = int.parse(date[2]);
-                                      //get individual dates!
-                                      setState(() {
-                                        incomeDate =
-                                            DateTime.utc(year, month, day);
-                                      });
-
-                                      await FirebaseFirestore.instance
-                                          .collection("users")
-                                          .doc(widget.owner)
-                                          .collection("Batches")
-                                          .doc(batchDocIds[widget.index])
-                                          .collection("BatchData")
-                                          .doc("Income")
-                                          .set(
-                                        {
-                                          "incomeDetails": widget.upto! +
-                                              [
-                                                {
-                                                  "date":
-                                                      DateFormat("dd/MM/yyyy")
-                                                          .format(incomeDate),
-                                                  'name': nameController.text
-                                                      .toString(),
-                                                  'Rate': rate,
-                                                  'Contact': contactController
-                                                      .text
-                                                      .toString(),
-                                                  'IncomeCategory': batchType,
-                                                  'Quantity': quantity,
-                                                  'Weight': weight,
-                                                  'BillAmount': billAmount,
-                                                  'PaymentMethod': paymentList[
-                                                      selectedIndex],
-                                                  'AmountPaid': paid,
-                                                  'AmountDue': due,
-                                                  'Description':
-                                                      descriptionController.text
-                                                          .toString(),
-                                                },
-                                              ] +
-                                              widget.after!,
-                                        },
-                                        SetOptions(merge: true),
-                                      );
-
-                                      List customers = [];
-
-                                      await FirebaseFirestore.instance
-                                          .collection("users")
-                                          .doc(FirebaseAuth
-                                              .instance.currentUser!.uid)
-                                          .collection("settings")
-                                          .doc("Customer List")
-                                          .get()
-                                          .then((value) {
-                                        if (value.exists) {
-                                          setState(() {
-                                            customers = value["customerList"];
-                                          });
-                                        }
-                                      });
-
-                                      for (int i = 0;
-                                          i < customers.length;
-                                          i++) {
-                                        if (customers[i]["contact"] ==
-                                                "+91 ${contactController.text.toString()}" &&
-                                            customers[i]["name"] ==
-                                                nameController.text
-                                                    .toString()) {
-                                          Fluttertoast.showToast(
-                                              msg: "Customer already exists!");
-                                        } else {
-                                          await FirebaseFirestore.instance
-                                              .collection("users")
-                                              .doc(FirebaseAuth
-                                                  .instance.currentUser!.uid)
-                                              .collection("settings")
-                                              .doc("Customer List")
-                                              .set({
-                                            "customerList":
-                                                FieldValue.arrayUnion([
-                                              {
-                                                "name": nameController.text
-                                                    .toString(),
-                                                "contact":
-                                                    "+91 ${contactController.text.toString()}",
-                                              }
-                                            ]),
-                                          }, SetOptions(merge: true));
-                                        }
-                                      }
-
-                                      Fluttertoast.showToast(
-                                          msg: "Details updated successfully!");
-
-                                      Navigator.pop(context, true);
-                                    }
+                                  if (!(double.parse(amountPaidController.text
+                                          .toString()) <=
+                                      double.parse(billAmountController.text
+                                          .toString()))) {
+                                    Fluttertoast.showToast(
+                                        msg:
+                                            "Amount Paid cannot be more than Bill Amount!");
                                   } else {
-                                    print(dateController.text.toString());
-                                    if (_formKey.currentState!.validate()) {
-                                      ScaffoldMessenger.of(context)
-                                          .showSnackBar(
-                                        const SnackBar(
-                                            content: Text('Processing Data')),
-                                      );
+                                    if (widget.isEdit == true) {
+                                      if (_formKey.currentState!.validate()) {
+                                        print("edit!");
 
-                                      if (batchType == "Chicken") {
-                                        await FirebaseFirestore.instance
-                                            .collection("users")
-                                            .doc(widget.owner)
-                                            .collection("Batches")
-                                            .doc(batchDocIds[widget.index])
-                                            .get()
-                                            .then((value) {
-                                          setState(() {
-                                            noChicks = int.parse(value
-                                                .data()!["NoOfBirds"]
-                                                .toString());
-                                          });
+                                        DateTime incomeDate = DateTime.now();
+                                        List date = dateController.text
+                                            .toString()
+                                            .split("/");
+                                        int month = 0;
+                                        int day = int.parse(date[0]);
+                                        switch (date[1]) {
+                                          case "jan":
+                                            month = 1;
+                                            break;
+                                          case "feb":
+                                            month = 2;
+                                            break;
+                                          case "mar":
+                                            month = 3;
+                                            break;
+                                          case "apr":
+                                            month = 4;
+                                            break;
+                                          case "may":
+                                            month = 5;
+                                            break;
+                                          case "jun":
+                                            month = 6;
+                                            break;
+                                          case "jul":
+                                            month = 7;
+                                            break;
+                                          case "aug":
+                                            month = 8;
+                                            break;
+                                          case "sep":
+                                            month = 9;
+                                            break;
+                                          case "oct":
+                                            month = 10;
+                                            break;
+                                          case "nov":
+                                            month = 11;
+                                            break;
+                                          case "dec":
+                                            month = 12;
+                                            break;
+                                        }
+                                        int year = int.parse(date[2]);
+                                        //get individual dates!
+                                        setState(() {
+                                          incomeDate =
+                                              DateTime.utc(year, month, day);
                                         });
 
-                                        print(noChicks);
-
-                                        if (noChicks > 0 &&
-                                            noChicks >= quantity) {
-                                          await addIncomeDetailsToFirestore();
+                                        if (batchType == "Chicken") {
                                           await FirebaseFirestore.instance
                                               .collection("users")
                                               .doc(widget.owner)
                                               .collection("Batches")
                                               .doc(batchDocIds[widget.index])
-                                              .set({
-                                            "Sold":
-                                                FieldValue.increment(quantity),
-                                          }, SetOptions(merge: true));
-                                        } else {
-                                          Fluttertoast.showToast(
-                                              msg: "Stock not available!");
-                                        }
-                                      } else {
-                                        await addIncomeDetailsToFirestore();
-                                      }
+                                              .get()
+                                              .then((value) {
+                                            setState(() {
+                                              noChicks = int.parse(value
+                                                      .data()!["NoOfBirds"]
+                                                      .toString()) -
+                                                  int.parse(value
+                                                      .data()!["Mortality"]
+                                                      .toString()) -
+                                                  int.parse(value
+                                                      .data()!["Sold"]
+                                                      .toString());
+                                            });
+                                          });
 
-                                      Navigator.pop(context, true);
+                                          print(noChicks);
+
+                                          if (noChicks > 0 &&
+                                              noChicks >= quantity) {
+                                            await addIncomeDetailsToFirestore();
+                                            if (quantity != soldBefore) {
+                                              await FirebaseFirestore.instance
+                                                  .collection("users")
+                                                  .doc(widget.owner)
+                                                  .collection("Batches")
+                                                  .doc(
+                                                      batchDocIds[widget.index])
+                                                  .set({
+                                                "Sold": FieldValue.increment(
+                                                    quantity),
+                                              }, SetOptions(merge: true));
+                                            }
+                                          } else {
+                                            Fluttertoast.showToast(
+                                                msg: "Stock not available!");
+                                          }
+                                        }
+                                        await FirebaseFirestore.instance
+                                            .collection("users")
+                                            .doc(widget.owner)
+                                            .collection("Batches")
+                                            .doc(batchDocIds[widget.index])
+                                            .collection("BatchData")
+                                            .doc("Income")
+                                            .set(
+                                          {
+                                            "incomeDetails": widget.upto! +
+                                                [
+                                                  {
+                                                    "date":
+                                                        DateFormat("dd/MM/yyyy")
+                                                            .format(incomeDate),
+                                                    'name': nameController.text
+                                                        .toString(),
+                                                    'Rate': rate,
+                                                    'Contact': contactController
+                                                        .text
+                                                        .toString(),
+                                                    'IncomeCategory': batchType,
+                                                    'Quantity': quantity,
+                                                    'Weight': weight,
+                                                    'BillAmount': billAmount,
+                                                    'PaymentMethod':
+                                                        paymentList[
+                                                            selectedIndex],
+                                                    'AmountPaid': paid,
+                                                    'AmountDue': due,
+                                                    "CostPerBird":
+                                                        widget.updatedPrice,
+                                                    'Description':
+                                                        descriptionController
+                                                            .text
+                                                            .toString(),
+                                                  },
+                                                ] +
+                                                widget.after!,
+                                          },
+                                        );
+
+                                        List customers = [];
+
+                                        await FirebaseFirestore.instance
+                                            .collection("users")
+                                            .doc(FirebaseAuth
+                                                .instance.currentUser!.uid)
+                                            .collection("settings")
+                                            .doc("Customer List")
+                                            .get()
+                                            .then((value) {
+                                          if (value.exists) {
+                                            setState(() {
+                                              customers = value["customerList"];
+                                            });
+                                          }
+                                        });
+
+                                        for (int i = 0;
+                                            i < customers.length;
+                                            i++) {
+                                          if (customers[i]["contact"] ==
+                                                  "+91 ${contactController.text.toString()}" &&
+                                              customers[i]["name"] ==
+                                                  nameController.text
+                                                      .toString()) {
+                                            Fluttertoast.showToast(
+                                                msg:
+                                                    "Customer already exists!");
+                                          } else {
+                                            await FirebaseFirestore.instance
+                                                .collection("users")
+                                                .doc(FirebaseAuth
+                                                    .instance.currentUser!.uid)
+                                                .collection("settings")
+                                                .doc("Customer List")
+                                                .set({
+                                              "customerList":
+                                                  FieldValue.arrayUnion([
+                                                {
+                                                  "name": nameController.text
+                                                      .toString(),
+                                                  "contact":
+                                                      "+91 ${contactController.text.toString()}",
+                                                }
+                                              ]),
+                                            }, SetOptions(merge: true));
+                                          }
+                                        }
+
+                                        Fluttertoast.showToast(
+                                            msg:
+                                                "Details updated successfully!");
+
+                                        Navigator.pop(context, true);
+                                      }
+                                    } else {
+                                      print(dateController.text.toString());
+                                      if (_formKey.currentState!.validate()) {
+                                        ScaffoldMessenger.of(context)
+                                            .showSnackBar(
+                                          const SnackBar(
+                                              content: Text('Processing Data')),
+                                        );
+
+                                        if (batchType == "Chicken") {
+                                          await FirebaseFirestore.instance
+                                              .collection("users")
+                                              .doc(widget.owner)
+                                              .collection("Batches")
+                                              .doc(batchDocIds[widget.index])
+                                              .get()
+                                              .then((value) {
+                                            setState(() {
+                                              noChicks = int.parse(value
+                                                      .data()!["NoOfBirds"]
+                                                      .toString()) -
+                                                  int.parse(value
+                                                      .data()!["Mortality"]
+                                                      .toString()) -
+                                                  int.parse(value
+                                                      .data()!["Sold"]
+                                                      .toString());
+                                            });
+                                          });
+
+                                          print(noChicks);
+
+                                          if (noChicks > 0 &&
+                                              noChicks >= quantity) {
+                                            await addIncomeDetailsToFirestore();
+                                            await FirebaseFirestore.instance
+                                                .collection("users")
+                                                .doc(widget.owner)
+                                                .collection("Batches")
+                                                .doc(batchDocIds[widget.index])
+                                                .set({
+                                              "Sold": FieldValue.increment(
+                                                  quantity),
+                                            }, SetOptions(merge: true));
+                                            Navigator.pop(context, true);
+                                          } else {
+                                            Fluttertoast.showToast(
+                                                msg: "Stock not available!");
+                                          }
+                                        } else {
+                                          await addIncomeDetailsToFirestore();
+                                          Navigator.pop(context, true);
+                                        }
+                                      }
                                     }
                                   }
                                 },
@@ -901,6 +1083,7 @@ class _AddIncomePageState extends State<AddIncomePage> {
               'Quantity': quantity,
               'Weight': weight,
               'BillAmount': billAmount,
+              "CostPerBird": updatedPrice,
               'PaymentMethod': paymentList[selectedIndex],
               'AmountPaid': paid,
               'AmountDue': due,
@@ -920,20 +1103,34 @@ class _AddIncomePageState extends State<AddIncomePage> {
         .collection("settings")
         .doc("Customer List")
         .get()
-        .then((value) {
+        .then((value) async {
       if (value.exists) {
         setState(() {
           customers = value["customerList"];
         });
+      } else {
+        await FirebaseFirestore.instance
+            .collection("users")
+            .doc(FirebaseAuth.instance.currentUser!.uid)
+            .collection("settings")
+            .doc("Customer List")
+            .set({
+          "customerList": [],
+        });
       }
     });
 
+    print("Customer List: $customers");
+    int addedCheck = 0;
     for (int i = 0; i < customers.length; i++) {
       if (customers[i]["contact"] ==
               "+91 ${contactController.text.toString()}" &&
           customers[i]["name"] == nameController.text.toString()) {
         Fluttertoast.showToast(msg: "Customer already exists!");
       } else {
+        setState(() {
+          addedCheck += 1;
+        });
         await FirebaseFirestore.instance
             .collection("users")
             .doc(FirebaseAuth.instance.currentUser!.uid)
@@ -948,6 +1145,21 @@ class _AddIncomePageState extends State<AddIncomePage> {
           ]),
         }, SetOptions(merge: true));
       }
+    }
+    if (addedCheck == 0) {
+      await FirebaseFirestore.instance
+          .collection("users")
+          .doc(FirebaseAuth.instance.currentUser!.uid)
+          .collection("settings")
+          .doc("Customer List")
+          .set({
+        "customerList": FieldValue.arrayUnion([
+          {
+            "name": nameController.text.toString(),
+            "contact": "+91 ${contactController.text.toString()}",
+          }
+        ]),
+      }, SetOptions(merge: true));
     }
   }
 }

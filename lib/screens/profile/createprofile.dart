@@ -72,6 +72,7 @@ class _CreateProfilePageState extends State<CreateProfilePage> {
   String? countryValue = "";
   String? stateValue = "";
   String? cityValue = "";
+  String type = "";
 
   final fireStore = FirebaseFirestore.instance.collection('users');
   List list = ["Broiler", "Deshi", "Layer", "Breeder Farm"];
@@ -211,7 +212,19 @@ class _CreateProfilePageState extends State<CreateProfilePage> {
                             }
                             return null;
                           }),
-                      customDropdown,
+                      CustomDropdown(
+                        list: list,
+                        height: 58,
+                        hint: "Farm",
+                        // index: curIndex,
+                        // controller: farmController,
+                        onchanged: (value) {
+                          setState(() {
+                            type = value;
+                          });
+                        },
+                        value: farmController.text.toString(),
+                      ),
                     ]))
               ],
             ),
@@ -232,7 +245,7 @@ class _CreateProfilePageState extends State<CreateProfilePage> {
                       'phone': widget.usingPhoneNumber
                           ? phone.text.toString()
                           : phoneController.text.toString(),
-                      'Type': customDropdown.value,
+                      'Type': type,
                       'State': stateValue,
                       'FarmName': farmnameController.text.toString(),
                       'Farm Capacity': capacityController.text.toString(),

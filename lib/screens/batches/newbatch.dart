@@ -236,10 +236,6 @@ class _NewBatchState extends State<NewBatch> {
                               const SnackBar(content: Text('Processing Data')),
                             );
 
-                            Future.delayed(Duration(milliseconds: 1000), () {
-                              Navigator.pop(context, true);
-                            });
-
                             // print(BreedController.text.toString());
                             print(selectedValue);
                             if (widget.isEdit == false) {
@@ -294,6 +290,14 @@ class _NewBatchState extends State<NewBatch> {
                               );
                             }
                           }
+                          Future.delayed(Duration(milliseconds: 1000), () {
+                            if (widget.isEdit == true) {
+                              Navigator.pop(context, true);
+                              Navigator.pop(context, true);
+                            } else {
+                              Navigator.pop(context, true);
+                            }
+                          });
                         },
                         width: width(context),
                         height: 55,

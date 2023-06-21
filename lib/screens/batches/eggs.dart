@@ -93,7 +93,9 @@ class _EggsPageState extends State<EggsPage> {
       int year = int.parse(date[2]);
       //get individual dates!
       setState(() {
-        totalChicks = int.parse(value.data()!["NoOfBirds"].toString());
+        totalChicks = int.parse(value.data()!["NoOfBirds"].toString()) -
+            int.parse(value.data()!["Sold"].toString()) -
+            int.parse(value.data()!["Mortality"].toString());
         batchDate = DateTime.utc(year, month, day);
       });
     });

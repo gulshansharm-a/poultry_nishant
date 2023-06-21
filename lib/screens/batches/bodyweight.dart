@@ -36,7 +36,7 @@ class _BodyWeightPageState extends State<BodyWeightPage> {
 
   List weightDetails = [];
   List editDetails = [];
-  String breedType = ""; 
+  String breedType = "";
 
   DateTime batchDate = DateTime.utc(1800, 01, 01);
   bool isLoading = true;
@@ -53,7 +53,7 @@ class _BodyWeightPageState extends State<BodyWeightPage> {
         .get()
         .then((value) {
       setState(() {
-        breedType = value.data()!["Breed"]; 
+        breedType = value.data()!["Breed"];
       });
       List dates = value.data()!["date"].toString().split("/");
       int month = 0;
@@ -103,7 +103,7 @@ class _BodyWeightPageState extends State<BodyWeightPage> {
       });
       print(batchDate);
     });
-  
+
     getWeightDetails();
   }
 
@@ -112,9 +112,6 @@ class _BodyWeightPageState extends State<BodyWeightPage> {
     getDateDetails();
   }
 
-
-  
-
   Future<void> getWeightDetails() async {
     double feedGivenDay = 0.0;
     Map feedDetails = {};
@@ -122,6 +119,7 @@ class _BodyWeightPageState extends State<BodyWeightPage> {
     setState(() {
       weightDetails.clear();
       editDetails.clear();
+      feedDetails.clear();
     });
 
     await FirebaseFirestore.instance
@@ -135,19 +133,60 @@ class _BodyWeightPageState extends State<BodyWeightPage> {
         .then((value) {
       if (value.exists) {
         for (int i = 0; i < value.data()!["feedServed"].length; i++) {
-          if (feedDetails.containsKey(value.data()!["feedServed"][i]["date"])) {
+          List dates =
+              value.data()!["feedServed"][i]["date"].toString().split("/");
+          int month = 0;
+          int day = int.parse(dates[0]);
+          switch (dates[1]) {
+            case "jan":
+              month = 1;
+              break;
+            case "feb":
+              month = 2;
+              break;
+            case "mar":
+              month = 3;
+              break;
+            case "apr":
+              month = 4;
+              break;
+            case "may":
+              month = 5;
+              break;
+            case "jun":
+              month = 6;
+              break;
+            case "jul":
+              month = 7;
+              break;
+            case "aug":
+              month = 8;
+              break;
+            case "sep":
+              month = 9;
+              break;
+            case "oct":
+              month = 10;
+              break;
+            case "nov":
+              month = 11;
+              break;
+            case "dec":
+              month = 12;
+              break;
+          }
+          int year = int.parse(dates[2]);
+          DateTime weightDate = DateTime.utc(year, month, day);
+
+          if (feedDetails.containsKey(weightDate)) {
             setState(() {
-              feedDetails[value.data()!["feedServed"][i]["date"]] +=
-                  double.parse(value
-                      .data()!["feedServed"][i]["feedQuantity"]
-                      .toString());
+              feedDetails[weightDate] += double.parse(
+                  value.data()!["feedServed"][i]["feedQuantity"].toString());
             });
           } else {
             setState(() {
-              feedDetails[value.data()!["feedServed"][i]["date"]] =
-                  double.parse(value
-                      .data()!["feedServed"][i]["feedQuantity"]
-                      .toString());
+              feedDetails[weightDate] = double.parse(
+                  value.data()!["feedServed"][i]["feedQuantity"].toString());
             });
           }
         }
@@ -210,14 +249,19 @@ class _BodyWeightPageState extends State<BodyWeightPage> {
           }
           int year = int.parse(dates[2]);
           DateTime bodyWeightDate = DateTime.utc(year, month, day);
-
-          if (feedDetails
-              .containsKey(value.data()!["weightDetails"][i]["date"])) {
-            setState(() {
-              feedGivenDay =
-                  feedDetails[value.data()!["weightDetails"][i]["date"]];
-            });
+          setState(() {
+            feedGivenDay = 0;
+          });
+          for (DateTime dates in feedDetails.keys.toList()) {
+            if (bodyWeightDate.isAfter(dates) ||
+                bodyWeightDate.isAtSameMomentAs(dates)) {
+              setState(() {
+                feedGivenDay += feedDetails[dates];
+              });
+            }
           }
+
+          print(feedGivenDay);
 
           setState(() {
             weightDetails.add({
@@ -402,20 +446,20 @@ class _BodyWeightPageState extends State<BodyWeightPage> {
                   ),
                 ),
                 addVerticalSpace(15),
-                Row(
-                  children: [
-                    Spacer(),
-                    CustomDropdown(
-                      hp: 5,
-                      list: list,
-                      height: 30,
-                      hint: "Last 15 days",
-                      iconSize: 10,
-                      textStyle: bodyText12w600(color: darkGray),
-                      width: width(context) * .35,
-                    ),
-                  ],
-                )
+                // Row(
+                //   children: [
+                //     Spacer(),
+                //     CustomDropdown(
+                //       hp: 5,
+                //       list: list,
+                //       height: 30,
+                //       hint: "Last 15 days",
+                //       iconSize: 10,
+                //       textStyle: bodyText12w600(color: darkGray),
+                //       width: width(context) * .35,
+                //     ),
+                //   ],
+                // )
               ],
             ),
           ),

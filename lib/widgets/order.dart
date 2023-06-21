@@ -35,6 +35,7 @@ class _OrderWidgetState extends State<OrderWidget> {
   Future<void> getOrderDetails() async {
     setState(() {
       isLoading = true;
+      orderDetails.clear();
     });
     await FirebaseFirestore.instance
         .collection('orders')
@@ -278,7 +279,15 @@ class _OrderWidgetState extends State<OrderWidget> {
                                           total: double.parse(
                                               orderDetails[index]["totalPrice"]
                                                   .toString()),
-                                        )));
+                                        ))).then((value) {
+                              if (value == null) {
+                                return;
+                              } else {
+                                if (value) {
+                                  getOrderDetails();
+                                }
+                              }
+                            });
                           } else {
                             Fluttertoast.showToast(
                                 msg:

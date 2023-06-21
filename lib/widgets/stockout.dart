@@ -38,28 +38,6 @@ class _StockOutWidgetState extends State<StockOutWidget> {
         setState(() {
           feedType = value.data()?['feedType'];
         });
-      } else {
-        await FirebaseFirestore.instance
-            .collection('users')
-            .doc(FirebaseAuth.instance.currentUser!.uid)
-            .collection("settings")
-            .doc("Feed Type")
-            .set({
-          "feedType": [
-            "Pre Starter",
-            "Starter",
-            "Phase 1",
-            "Phase 2",
-          ]
-        });
-        setState(() {
-          feedType = [
-            "Pre Starter",
-            "Starter",
-            "Phase 1",
-            "Phase 2",
-          ];
-        });
       }
     });
   }
@@ -99,6 +77,7 @@ class _StockOutWidgetState extends State<StockOutWidget> {
                   value.data()!["order${i + 1}"]["feedQuantity"].toString());
             });
           }
+          
         }
       } else {
         print('No stock!');
@@ -251,8 +230,11 @@ class _StockOutWidgetState extends State<StockOutWidget> {
             ],
           ),
           CustomButton(
-              text: "Transfer Feed",
-              onClick: () async {
+            text: "Transfer Feed",
+            onClick: () async {
+              if (quantityButton.current == 0) {
+                Fluttertoast.showToast(msg: "Cannot transfer 0 quantity!");
+              } else {
                 int index = batch.indexOf(batchName);
                 print(index);
                 int stockToAdd = 0;
@@ -385,13 +367,16 @@ class _StockOutWidgetState extends State<StockOutWidget> {
                     builder: (context) => ShowDialogBox(
                           message: "Feed Transferred!!",
                           isShowAds: false,
+                          
                         ));
 
                 Future.delayed(Duration(seconds: 1), () {
                   Navigator.pop(context, true);
                   Navigator.pop(context, true);
                 });
-              })
+              }
+            },
+          ),
         ],
       ),
     );

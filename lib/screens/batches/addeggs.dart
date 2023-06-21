@@ -248,14 +248,9 @@ class _AddEggsPageState extends State<AddEggsPage> {
                                 });
 
                                 setState(() {
-                                  feedCostToday += (double.parse(value
-                                          .data()!["feedServed"][i]
-                                              ["priceForFeed"]
-                                          .toString())) *
-                                      (double.parse(value
-                                          .data()!["feedServed"][i]
-                                              ["feedQuantity"]
-                                          .toString()));
+                                  feedCostToday += double.parse(value
+                                      .data()!["feedServed"][i]["priceForFeed"]
+                                      .toString());
                                 });
                               }
                             }
@@ -326,13 +321,8 @@ class _AddEggsPageState extends State<AddEggsPage> {
 
                                 setState(() {
                                   feedCostToday += (double.parse(value
-                                          .data()!["feedServed"][i]
-                                              ["priceForFeed"]
-                                          .toString())) *
-                                      (double.parse(value
-                                          .data()!["feedServed"][i]
-                                              ["feedQuantity"]
-                                          .toString()));
+                                      .data()!["feedServed"][i]["priceForFeed"]
+                                      .toString()));
                                 });
                               }
                             }

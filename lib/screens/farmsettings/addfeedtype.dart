@@ -43,20 +43,26 @@ class AddFeedType extends StatelessWidget {
                 CustomButton(
                     text: "Add",
                     onClick: () async {
-                      await FirebaseFirestore.instance
-                          .collection('users')
-                          .doc(FirebaseAuth.instance.currentUser!.uid)
-                          .collection('settings')
-                          .doc('Feed Type')
-                          .set({
-                        "feedType": FieldValue.arrayUnion(
-                            [feedtypeController.text.toString()]),
-                      }, SetOptions(merge: true)).then(
-                        (value) {
-                          Fluttertoast.showToast(msg: "Successfully added!");
-                          Navigator.pop(context, true);
-                        },
-                      );
+                      if (feedtypeController.text.toString().trim().length ==
+                          0) {
+                        Fluttertoast.showToast(
+                            msg: "Feed Type cannot be empty!");
+                      } else {
+                        await FirebaseFirestore.instance
+                            .collection('users')
+                            .doc(FirebaseAuth.instance.currentUser!.uid)
+                            .collection('settings')
+                            .doc('Feed Type')
+                            .set({
+                          "feedType": FieldValue.arrayUnion(
+                              [feedtypeController.text.toString()]),
+                        }, SetOptions(merge: true)).then(
+                          (value) {
+                            Fluttertoast.showToast(msg: "Successfully added!");
+                            Navigator.pop(context, true);
+                          },
+                        );
+                      }
                     })
               ],
             ),

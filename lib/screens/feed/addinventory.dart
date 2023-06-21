@@ -1,7 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:poultry_app/screens/mainscreens/subscription.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 import 'package:poultry_app/utils/constants.dart';
 import 'package:poultry_app/widgets/custombutton.dart';
 import 'package:poultry_app/widgets/customdropdown.dart';
@@ -148,45 +148,49 @@ class _AddInventoryPageState extends State<AddInventoryPage> {
                   text: "Feed Received",
                   onClick: () async {
                     int current = quantityButton.current;
-                    await FirebaseFirestore.instance
-                        .collection('inventory')
-                        .doc(FirebaseAuth.instance.currentUser!.uid)
-                        .set(
-                      {
+                    if (current != 0) {
+                      await FirebaseFirestore.instance
+                          .collection('inventory')
+                          .doc(FirebaseAuth.instance.currentUser!.uid)
+                          .set(
+                        {
+                          selectedValue: {
+                            "feedType": orderDetails[index]["feedType"],
+                            "feedCompany": orderDetails[index]["feedCompany"],
+                            "feedQuantity": FieldValue.increment(current),
+                            "bagLocation": bagLoc,
+                            "originalQuantity": FieldValue.increment(current),
+                            "feedPrice": orderDetails[index]["feedPrice"],
+                          }
+                        },
+                        SetOptions(merge: true),
+                      );
+
+                      await FirebaseFirestore.instance
+                          .collection('orders')
+                          .doc(FirebaseAuth.instance.currentUser!.uid)
+                          .set({
                         selectedValue: {
-                          "feedType": orderDetails[index]["feedType"],
-                          "feedCompany": orderDetails[index]["feedCompany"],
-                          "feedQuantity": FieldValue.increment(current),
-                          "bagLocation": bagLoc,
-                          "originalQuantity": FieldValue.increment(current),
-                          "feedPrice": orderDetails[index]["feedPrice"],
+                          "feedQuantity": quantity - quantityButton.current,
+                          "orderStatus": quantity - quantityButton.current == 0
+                              ? "Completed"
+                              : "Partially Received",
                         }
-                      },
-                      SetOptions(merge: true),
-                    );
+                      }, SetOptions(merge: true));
 
-                    await FirebaseFirestore.instance
-                        .collection('orders')
-                        .doc(FirebaseAuth.instance.currentUser!.uid)
-                        .set({
-                      selectedValue: {
-                        "feedQuantity": quantity - quantityButton.current,
-                        "orderStatus": quantity - quantityButton.current == 0
-                            ? "Completed"
-                            : "Partially Received",
-                      }
-                    }, SetOptions(merge: true));
-
-                    showDialog(
-                        context: context,
-                        builder: (context) => ShowDialogBox(
-                              message: "Feed Received!!",
-                              subMessage: '',
-                            ));
-                    Future.delayed(Duration(seconds: 2), () {
-                      Navigator.pop(context, true);
-                      Navigator.pop(context, true);
-                    });
+                      showDialog(
+                          context: context,
+                          builder: (context) => ShowDialogBox(
+                                message: "Feed Received!!",
+                                subMessage: '',
+                              ));
+                      Future.delayed(Duration(seconds: 2), () {
+                        Navigator.pop(context, true);
+                        Navigator.pop(context, true);
+                      });
+                    } else {
+                      Fluttertoast.showToast(msg: "Feed received cannnot be 0");
+                    }
                   })
             ],
           ),

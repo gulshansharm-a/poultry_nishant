@@ -26,51 +26,57 @@ class _ChickFeedRequirementPageState extends State<ChickFeedRequirementPage> {
   List requirementDetails = [];
   bool isLoading = false;
 
-  Future<void> getFeedType() async {
-    setState(() {
-      isLoading = true;
-    });
-    await FirebaseFirestore.instance
-        .collection('users')
-        .doc(FirebaseAuth.instance.currentUser!.uid)
-        .collection("settings")
-        .doc("Feed Type")
-        .get()
-        .then((value) async {
-      if (value.exists) {
-        setState(() {
-          feedTypeList = value.data()?['feedType'];
-        });
-      }
-    });
-    setState(() {
-      isLoading = false;
-    });
-  }
+  // Future<void> getFeedType() async {
+  //   setState(() {
+  //     isLoading = true;
+  //     requirementDetails.clear();
+  //   });
+  //   await FirebaseFirestore.instance
+  //       .collection('users')
+  //       .doc(FirebaseAuth.instance.currentUser!.uid)
+  //       .collection("settings")
+  //       .doc("Feed Type")
+  //       .get()
+  //       .then((value) async {
+  //     if (value.exists) {
+  //       setState(() {
+  //         feedTypeList = value.data()?['feedType'];
+  //       });
+  //     }
+  //   });
+  //   setState(() {
+  //     isLoading = false;
+  //   });
+  // }
 
-  Future<void> getRequirements(String breedString, String feedString) async {
+  Future<void> getRequirements(String breedString) async {
     setState(() {
       isLoading = true;
+      requirementDetails.clear();
     });
     await FirebaseFirestore.instance
         .collection("users")
         .doc(FirebaseAuth.instance.currentUser!.uid)
         .collection("settings")
         .doc("Chick Feed Requirement")
-        .collection(breedString)
-        .doc(feedString)
         .get()
         .then((value) {
       if (value.exists) {
-        for (int i = 0; i < value.data()!["dayDetails"].length; i++) {
-          requirementDetails.add({
-            "day": value.data()!["dayDetails"][i]["day"],
-            "breed": value.data()!["dayDetails"][i]["breed"],
-            "feed": value.data()!["dayDetails"][i]["feed"],
-            "grams": value.data()!["dayDetails"][i]["grams"],
-          });
+        if (value.data()![breedString] != null) {
+          for (int i = 0; i < value.data()![breedString].length; i++) {
+            requirementDetails.add({
+              "day": value.data()![breedString][i]["day"],
+              "grams": value.data()![breedString][i]["grams"],
+            });
+          }
         }
       }
+    });
+
+    setState(() {
+      requirementDetails.sort((first, second) {
+        return first["day"].compareTo(second["day"]);
+      });
     });
     setState(() {
       isLoading = false;
@@ -79,14 +85,28 @@ class _ChickFeedRequirementPageState extends State<ChickFeedRequirementPage> {
 
   void initState() {
     super.initState();
-    getFeedType();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       floatingActionButton: FloatedButton(onTap: () {
-        NextScreen(context, AddChickFeedReq());
+        Navigator.push(context,
+                MaterialPageRoute(builder: (context) => AddChickFeedReq()))
+            .then((value) {
+          if (value == null) {
+            return;
+          } else {
+            if (value) {
+              if (breedString == "") {
+                setState(() {
+                  breedString = breed[0];
+                });
+              }
+              getRequirements(breedString);
+            }
+          }
+        });
       }),
       appBar: PreferredSize(
         child: GeneralAppBar(
@@ -104,60 +124,7 @@ class _ChickFeedRequirementPageState extends State<ChickFeedRequirementPage> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
-                Container(
-                    margin: EdgeInsets.symmetric(vertical: 6),
-                    height: 30,
-                    width: width(context) * 0.35,
-                    decoration: shadowDecoration(
-                      6,
-                      0,
-                      tfColor,
-                      bcolor: normalGray,
-                    ),
-                    padding: EdgeInsets.symmetric(horizontal: 5, vertical: 6),
-                    child: Padding(
-                      padding: EdgeInsets.symmetric(horizontal: 5),
-                      child: Container(
-                        height: height(context) * 0.04,
-                        child: Row(
-                          children: [
-                            Expanded(
-                              child: DropdownButton(
-                                  icon: Icon(
-                                    CupertinoIcons.chevron_down,
-                                    size: 12,
-                                    color: gray,
-                                  ),
-                                  hint: Text(
-                                    feedString.isNotEmpty
-                                        ? feedString
-                                        : "Feed Type",
-                                    style: bodyText12w600(color: darkGray),
-                                  ),
-                                  style: bodyText12w600(color: darkGray),
-                                  dropdownColor: white,
-                                  underline: SizedBox(),
-                                  isExpanded: true,
-                                  items: feedTypeList.map((e) {
-                                    return DropdownMenuItem(
-                                        value: e.toString(),
-                                        child: Text(e.toString()));
-                                  }).toList(),
-                                  onChanged: (value) {
-                                    print(value);
-                                    setState(() {
-                                      feedString = value!;
-                                    });
-                                    if (breedString.length != 0 &&
-                                        feedString.length != 0) {
-                                      getRequirements(breedString, feedString);
-                                    }
-                                  }),
-                            ),
-                          ],
-                        ),
-                      ),
-                    )),
+                Spacer(),
                 Padding(
                   padding: const EdgeInsets.only(left: 20),
                   child: CustomDropdown(
@@ -173,12 +140,13 @@ class _ChickFeedRequirementPageState extends State<ChickFeedRequirementPage> {
                       setState(() {
                         breedString = value;
                       });
-                      if (breedString.length != 0 && feedString.length != 0) {
-                        getRequirements(breedString, feedString);
+                      if (breedString.length != 0) {
+                        getRequirements(breedString);
                       }
                     },
                   ),
                 ),
+                addHorizontalySpace(20),
               ],
             ),
             addVerticalSpace(10),
@@ -197,32 +165,65 @@ class _ChickFeedRequirementPageState extends State<ChickFeedRequirementPage> {
                       );
                     },
                     itemBuilder: (context, index) {
-                      return Container(
-                        padding:
-                            EdgeInsets.symmetric(horizontal: 15, vertical: 12),
-                        height: 70,
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              "Day ${requirementDetails[index]["day"]}",
-                              style: bodyText17w500(color: black),
-                            ),
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Text(
-                                  "${requirementDetails[index]["breed"]}",
-                                  style: bodyText14normal(color: darkGray),
+                      return InkWell(
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => AddChickFeedReq(
+                                isEdit: true,
+                                day: requirementDetails[index]["day"],
+                                grams: requirementDetails[index]["grams"],
+                                breedSelected: breedString,
+                                upto: requirementDetails.sublist(0, index),
+                                after: requirementDetails.sublist(
+                                  index + 1,
                                 ),
-                                Text(
-                                  "${requirementDetails[index]["grams"]} gms",
-                                  style: bodyText14normal(color: darkGray),
-                                )
-                              ],
-                            )
-                          ],
+                              ),
+                            ),
+                          ).then((value) {
+                            if (value == null) {
+                              return;
+                            } else {
+                              if (value) {
+                                if (breedString == "") {
+                                  setState(() {
+                                    breedString = breed[0];
+                                  });
+                                }
+                                getRequirements(breedString);
+                              }
+                            }
+                          });
+                        },
+                        child: Container(
+                          padding: EdgeInsets.symmetric(
+                              horizontal: 15, vertical: 12),
+                          height: 70,
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                "Day ${requirementDetails[index]["day"]}",
+                                style: bodyText17w500(color: black),
+                              ),
+                              Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Text(
+                                    "${breedString}",
+                                    style: bodyText14normal(color: darkGray),
+                                  ),
+                                  Text(
+                                    "${requirementDetails[index]["grams"]} gms",
+                                    style: bodyText14normal(color: darkGray),
+                                  )
+                                ],
+                              )
+                            ],
+                          ),
                         ),
                       );
                     }),

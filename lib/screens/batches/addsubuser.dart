@@ -13,7 +13,7 @@ import 'package:poultry_app/widgets/navigation.dart';
 
 class AddSubUserPage extends StatefulWidget {
   final int index;
-  String owner; 
+  String owner;
   AddSubUserPage({super.key, required this.index, required this.owner});
 
   @override
@@ -46,7 +46,7 @@ class _AddSubUserPageState extends State<AddSubUserPage> {
   void initState() {
     super.initState();
     setState(() {
-      selectedValue = "";
+      selectedValue = "View only";
     });
   }
 
@@ -172,7 +172,7 @@ class _AddSubUserPageState extends State<AddSubUserPage> {
                           Fluttertoast.showToast(
                               msg: "User successfully added to batch!");
 
-                          Navigator.of(context).pop();
+                          Navigator.pop(context, true);
                         }
                       } else {
                         Fluttertoast.showToast(

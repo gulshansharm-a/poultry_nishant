@@ -38,7 +38,7 @@ class _HomePageState extends State<HomePage> {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Text(
-                        "Happy Poultry Farm",
+                        "Poultry Hub",
                         style: bodyText16w600(color: black),
                       ),
                       TextButton(

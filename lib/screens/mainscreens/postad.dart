@@ -6,6 +6,7 @@ import 'package:dotted_border/dotted_border.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:poultry_app/screens/farmsettings/userinfo.dart';
 import 'package:poultry_app/utils/constants.dart';
@@ -256,45 +257,11 @@ class _PostAdPageState extends State<PostAdPage> {
 
                       if (_formKey.currentState!.validate()) {
                         //first upload image to storage if any!
-
-                        if (imagePicked == null) {
-                          await FirebaseFirestore.instance
-                              .collection("ads")
-                              .doc(FirebaseAuth.instance.currentUser!.uid)
-                              .set(
-                            {
-                              "advertisementDetails": FieldValue.arrayUnion([
-                                {
-                                  "contact": contactController.text.toString(),
-                                  "quantity": int.parse(
-                                      quantityController.text.toString()),
-                                  "city": city,
-                                  "village": villageController.text.toString(),
-                                  "country": country,
-                                  "state": state,
-                                  "description":
-                                      descriptionController.text.toString(),
-                                  "imageUrl": null,
-                                  "date": DateFormat("dd/MM/yyyy")
-                                      .format(DateTime.now()),
-                                  "type": widget.title,
-                                }
-                              ]),
-                            },
-                            SetOptions(merge: true),
-                          );
+                        if (contactController.text.length != 10) {
+                          Fluttertoast.showToast(
+                              msg: "Invalid Contact Number!");
                         } else {
-                          FirebaseStorage storage = FirebaseStorage.instance;
-
-                          final reference = storage.ref().child(
-                              "ads/${FirebaseAuth.instance.currentUser!.uid}");
-
-                          final UploadTask upload =
-                              reference.putFile(File(imagePicked!.path));
-                          await upload.whenComplete(() async {
-                            final String downloadUrl =
-                                await reference.getDownloadURL();
-
+                          if (imagePicked == null) {
                             await FirebaseFirestore.instance
                                 .collection("ads")
                                 .doc(FirebaseAuth.instance.currentUser!.uid)
@@ -306,15 +273,14 @@ class _PostAdPageState extends State<PostAdPage> {
                                         contactController.text.toString(),
                                     "quantity": int.parse(
                                         quantityController.text.toString()),
-                                    "state": state,
                                     "city": city,
-                                    "country": country,
                                     "village":
                                         villageController.text.toString(),
-                                    "imageUrl": downloadUrl,
+                                    "country": country,
+                                    "state": state,
                                     "description":
                                         descriptionController.text.toString(),
-                                    "sold": false,
+                                    "imageUrl": null,
                                     "date": DateFormat("dd/MM/yyyy")
                                         .format(DateTime.now()),
                                     "type": widget.title,
@@ -323,22 +289,63 @@ class _PostAdPageState extends State<PostAdPage> {
                               },
                               SetOptions(merge: true),
                             );
+                          } else {
+                            FirebaseStorage storage = FirebaseStorage.instance;
+
+                            final reference = storage.ref().child(
+                                "ads/${FirebaseAuth.instance.currentUser!.uid}");
+
+                            final UploadTask upload =
+                                reference.putFile(File(imagePicked!.path));
+                            await upload.whenComplete(() async {
+                              final String downloadUrl =
+                                  await reference.getDownloadURL();
+
+                              await FirebaseFirestore.instance
+                                  .collection("ads")
+                                  .doc(FirebaseAuth.instance.currentUser!.uid)
+                                  .set(
+                                {
+                                  "advertisementDetails":
+                                      FieldValue.arrayUnion([
+                                    {
+                                      "contact":
+                                          contactController.text.toString(),
+                                      "quantity": int.parse(
+                                          quantityController.text.toString()),
+                                      "state": state,
+                                      "city": city,
+                                      "country": country,
+                                      "village":
+                                          villageController.text.toString(),
+                                      "imageUrl": downloadUrl,
+                                      "description":
+                                          descriptionController.text.toString(),
+                                      "sold": false,
+                                      "date": DateFormat("dd/MM/yyyy")
+                                          .format(DateTime.now()),
+                                      "type": widget.title,
+                                    }
+                                  ]),
+                                },
+                                SetOptions(merge: true),
+                              );
+                            });
+                          }
+                          showDialog(
+                              context: context,
+                              builder: (context) =>
+                                  ShowDialogBox(message: "Ad Posted!!"));
+
+                          Future.delayed(
+                              Duration(
+                                seconds: 1,
+                              ), () {
+                            Navigator.pop(context);
+                            Navigator.pop(context);
+                            Navigator.pop(context);
                           });
                         }
-
-                        showDialog(
-                            context: context,
-                            builder: (context) =>
-                                ShowDialogBox(message: "Ad Posted!!"));
-
-                        Future.delayed(
-                            Duration(
-                              seconds: 1,
-                            ), () {
-                          Navigator.pop(context);
-                          Navigator.pop(context);
-                          Navigator.pop(context);
-                        });
                       }
                     },
                     width: width(context),

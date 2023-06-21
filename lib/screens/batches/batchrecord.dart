@@ -124,6 +124,26 @@ class _BatchRecordPageState extends State<BatchRecordPage> {
     print(batchType);
   }
 
+  Future<void> getDetails() async {
+    await FirebaseFirestore.instance
+        .collection('users')
+        .doc(owner)
+        .collection('Batches')
+        .doc(batchDocIds[widget.index])
+        .get()
+        .then((values) {
+      print(values);
+      setState(() {
+        batchType = values["Breed"];
+        totalChicks = int.parse(values["NoOfBirds"].toString());
+        sold = int.parse(values["Sold"].toString());
+        mortality = int.parse(values["Mortality"].toString());
+        live = totalChicks - sold - mortality;
+      });
+    });
+    print(batchType);
+  }
+
   // List<dynamic> record = [
   //   {
   //     "lead": "assets/images/income.png",

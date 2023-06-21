@@ -115,28 +115,6 @@ class _AddFeedServedPageState extends State<AddFeedServedPage> {
         setState(() {
           feedType = value.data()?['feedType'];
         });
-      } else {
-        await FirebaseFirestore.instance
-            .collection('users')
-            .doc(widget.owner)
-            .collection("settings")
-            .doc("Feed Type")
-            .set({
-          "feedType": [
-            "Pre Starter",
-            "Starter",
-            "Phase 1",
-            "Phase 2",
-          ]
-        });
-        setState(() {
-          feedType = [
-            "Pre Starter",
-            "Starter",
-            "Phase 1",
-            "Phase 2",
-          ];
-        });
       }
     });
   }
@@ -162,6 +140,7 @@ class _AddFeedServedPageState extends State<AddFeedServedPage> {
                   .doc(widget.owner)
                   .get()
                   .then((orderValue) {
+                print(orderValue.data());
                 setState(() {
                   bagWeight = double.parse(
                       orderValue.data()![key]["feedWeight"].toString());
@@ -195,6 +174,7 @@ class _AddFeedServedPageState extends State<AddFeedServedPage> {
   void initState() {
     super.initState();
     getFeedType();
+    getBatchInformation();
   }
 
   @override
@@ -273,143 +253,301 @@ class _AddFeedServedPageState extends State<AddFeedServedPage> {
               child: CustomButton(
                   text: "Add",
                   onClick: () async {
-                    if (_formKey.currentState!.validate()) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Processing Data')),
-                      );
-                      double priceForFeed = 0.0;
-                      double totalFeedUsed =
-                          double.parse(totalFeedController.text.toString());
-                      if (totalFeedUsed > stockForType) {
-                        Fluttertoast.showToast(msg: "Stock not available!");
-                      } else {
-                        await FirebaseFirestore.instance
-                            .collection("users")
-                            .doc(widget.owner)
-                            .collection("Batches")
-                            .doc(widget.docId)
-                            .get()
-                            .then((value) async {
-                          Map feedMap =
-                              value.data()!["feedTypeQuantity"][feedSelected];
+                    showDialog(
+                        context: context,
+                        builder: (context) {
+                          return AlertDialog(
+                              contentPadding: const EdgeInsets.all(6),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(10.0),
+                              ),
+                              content: Builder(builder: (context) {
+                                var height = MediaQuery.of(context).size.height;
+                                var width = MediaQuery.of(context).size.width;
 
-                          Map usedMap = value.data()!["feedTypeQuantity"]
-                                  [feedSelected]["used"] ??
-                              {};
+                                return Container(
+                                  height: height * 0.2,
+                                  padding: EdgeInsets.all(
+                                    10.0,
+                                  ),
+                                  child: Column(
+                                    children: [
+                                      // SizedBox(
+                                      //   height: 20.0,
+                                      // ),
+                                      Center(
+                                        child: Text(
+                                          "This action is not reversible. Are you sure you want to continue with Date: ${dateController.text.toString()}?",
+                                          textAlign: TextAlign.center,
+                                          style: bodyText16Bold(
+                                            color: black,
+                                          ),
+                                        ),
+                                      ),
+                                      Spacer(),
+                                      Row(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.center,
+                                        children: [
+                                          InkWell(
+                                            onTap: () {
+                                              Navigator.pop(context);
+                                            },
+                                            child: Container(
+                                              height: 40,
+                                              width: width * 0.3,
+                                              decoration: BoxDecoration(
+                                                  border:
+                                                      Border.all(color: yellow),
+                                                  borderRadius:
+                                                      BorderRadius.circular(6)),
+                                              child: Center(
+                                                child: Text(
+                                                  'Cancel',
+                                                  style: bodyText14Bold(
+                                                      color: black),
+                                                ),
+                                              ),
+                                            ),
+                                          ),
+                                          addHorizontalySpace(20),
+                                          InkWell(
+                                            onTap: () async {
+                                              if (_formKey.currentState!
+                                                  .validate()) {
+                                                ScaffoldMessenger.of(context)
+                                                    .showSnackBar(
+                                                  const SnackBar(
+                                                      content: Text(
+                                                          'Processing Data')),
+                                                );
+                                                double priceForFeed = 0.0;
+                                                double totalFeedUsed =
+                                                    double.parse(
+                                                        totalFeedController.text
+                                                            .toString());
+                                                if (totalFeedUsed >
+                                                    stockForType) {
+                                                  Fluttertoast.showToast(
+                                                      msg:
+                                                          "Stock not available!");
+                                                } else {
+                                                  await FirebaseFirestore
+                                                      .instance
+                                                      .collection("users")
+                                                      .doc(widget.owner)
+                                                      .collection("Batches")
+                                                      .doc(widget.docId)
+                                                      .get()
+                                                      .then((value) async {
+                                                    Map feedMap = value.data()![
+                                                                "feedTypeQuantity"]
+                                                            [feedSelected] ??
+                                                        {};
 
-                          double bagsUsed = double.parse(
-                              (totalFeedUsed / 50).toStringAsPrecision(1));
+                                                    Map usedMap = value.data()![
+                                                                    "feedTypeQuantity"]
+                                                                [feedSelected]
+                                                            ["used"] ??
+                                                        {};
 
-                          for (var keys in feedMap.keys.toList()..sort()) {
-                            double currentLeft = 0.0;
-                            if (usedMap[keys] == null) {
-                              currentLeft =
-                                  double.tryParse(feedMap[keys].toString()) ??
-                                      -1;
-                            } else {
-                              currentLeft =
-                                  double.parse(feedMap[keys].toString()) -
-                                      double.parse(usedMap[keys].toString());
-                            }
+                                                    double bagsUsed = double
+                                                        .parse((totalFeedUsed /
+                                                                50)
+                                                            .toStringAsPrecision(
+                                                                1));
 
-                            //49.6 bags left
-                            //0.6 bags used < 49.6 bags left
-                            if (bagsUsed > 0) {
-                              if (bagsUsed < currentLeft) {
-                                if (currentLeft == -1) {
-                                  break;
-                                }
-                                await FirebaseFirestore.instance
-                                    .collection('users')
-                                    .doc(widget.owner)
-                                    .collection("Batches")
-                                    .doc(widget.docId)
-                                    .set({
-                                  "feedTypeQuantity": {
-                                    feedSelected: {
-                                      "used": {
-                                        keys: FieldValue.increment(bagsUsed),
-                                      }
-                                    }
-                                  }
-                                }, SetOptions(merge: true));
-                                priceFeed += prices[keys] * bagsUsed;
-                                break;
-                              } else {
-                                // 2 bags used > 0.6 bags left
-                                await FirebaseFirestore.instance
-                                    .collection('users')
-                                    .doc(widget.owner)
-                                    .collection("Batches")
-                                    .doc(widget.docId)
-                                    .set({
-                                  "feedTypeQuantity": {
-                                    feedSelected: {
-                                      "used": {
-                                        keys: FieldValue.increment(currentLeft),
-                                      }
-                                    }
-                                  }
-                                }, SetOptions(merge: true));
+                                                    for (var keys
+                                                        in feedMap.keys.toList()
+                                                          ..sort()) {
+                                                      double currentLeft = 0.0;
+                                                      if (usedMap[keys] ==
+                                                          null) {
+                                                        currentLeft = double
+                                                                .tryParse(feedMap[
+                                                                        keys]
+                                                                    .toString()) ??
+                                                            -1;
+                                                      } else {
+                                                        currentLeft = double
+                                                                .parse(feedMap[
+                                                                        keys]
+                                                                    .toString()) -
+                                                            double.parse(
+                                                                usedMap[keys]
+                                                                    .toString());
+                                                      }
 
-                                priceFeed += prices[keys] * currentLeft;
+                                                      //49.6 bags left
+                                                      //0.6 bags used < 49.6 bags left
+                                                      if (bagsUsed > 0) {
+                                                        if (currentLeft == -1) {
+                                                          break;
+                                                        }
+                                                        if (bagsUsed <
+                                                            currentLeft) {
+                                                          await FirebaseFirestore
+                                                              .instance
+                                                              .collection(
+                                                                  'users')
+                                                              .doc(widget.owner)
+                                                              .collection(
+                                                                  "Batches")
+                                                              .doc(widget.docId)
+                                                              .set(
+                                                                  {
+                                                                "feedTypeQuantity":
+                                                                    {
+                                                                  feedSelected:
+                                                                      {
+                                                                    "used": {
+                                                                      keys: FieldValue
+                                                                          .increment(
+                                                                              bagsUsed),
+                                                                    }
+                                                                  }
+                                                                }
+                                                              },
+                                                                  SetOptions(
+                                                                      merge:
+                                                                          true));
+                                                          priceFeed +=
+                                                              prices[keys] *
+                                                                  bagsUsed;
+                                                          break;
+                                                        } else {
+                                                          // 2 bags used > 0.6 bags left
+                                                          if (currentLeft ==
+                                                              -1) {
+                                                            break;
+                                                          }
+                                                          await FirebaseFirestore
+                                                              .instance
+                                                              .collection(
+                                                                  'users')
+                                                              .doc(widget.owner)
+                                                              .collection(
+                                                                  "Batches")
+                                                              .doc(widget.docId)
+                                                              .set(
+                                                                  {
+                                                                "feedTypeQuantity":
+                                                                    {
+                                                                  feedSelected:
+                                                                      {
+                                                                    "used": {
+                                                                      keys: FieldValue
+                                                                          .increment(
+                                                                              currentLeft),
+                                                                    }
+                                                                  }
+                                                                }
+                                                              },
+                                                                  SetOptions(
+                                                                      merge:
+                                                                          true));
 
-                                setState(() {
-                                  bagsUsed -= currentLeft;
-                                  if (currentLeft == -1) {
-                                    setState(() {
-                                      bagsUsed = 0;
-                                    });
-                                  }
-                                });
-                              }
-                            }
-                          }
+                                                          priceFeed +=
+                                                              prices[keys] *
+                                                                  currentLeft;
+
+                                                          setState(() {
+                                                            bagsUsed -=
+                                                                currentLeft;
+                                                            if (currentLeft ==
+                                                                -1) {
+                                                              setState(() {
+                                                                bagsUsed = 0;
+                                                              });
+                                                            }
+                                                          });
+                                                        }
+                                                      }
+                                                    }
+                                                  });
+
+                                                  await FirebaseFirestore
+                                                      .instance
+                                                      .collection('users')
+                                                      .doc(widget.owner)
+                                                      .collection("Batches")
+                                                      .doc(widget.docId)
+                                                      .collection("BatchData")
+                                                      .doc("Feed Served")
+                                                      .set({
+                                                    "feedServed":
+                                                        FieldValue.arrayUnion([
+                                                      {
+                                                        "date": dateController
+                                                            .text
+                                                            .toString(),
+                                                        "feedType":
+                                                            feedSelected,
+                                                        "feedQuantity":
+                                                            double.parse(
+                                                                totalFeedController
+                                                                    .text
+                                                                    .toString()),
+                                                        "priceForFeed":
+                                                            priceFeed,
+                                                      }
+                                                    ]),
+                                                  }, SetOptions(merge: true));
+
+                                                  await FirebaseFirestore
+                                                      .instance
+                                                      .collection("users")
+                                                      .doc(widget.owner)
+                                                      .collection("Batches")
+                                                      .doc(widget.docId)
+                                                      .collection("BatchData")
+                                                      .doc("Expenses")
+                                                      .set({
+                                                    "expenseDetails":
+                                                        FieldValue.arrayUnion([
+                                                      {
+                                                        "Amount": priceFeed,
+                                                        "Description":
+                                                            "Served as Feed",
+                                                        "Expenses Category":
+                                                            "Feed Served",
+                                                        "Date": dateController
+                                                            .text
+                                                            .toString(),
+                                                      }
+                                                    ]),
+                                                  }, SetOptions(merge: true));
+
+                                                  Navigator.pop(context, true);
+                                                  Navigator.pop(context, true);
+                                                }
+                                              }
+                                            },
+                                            child: Container(
+                                              height: 40,
+                                              width: width * 0.25,
+                                              decoration: BoxDecoration(
+                                                  border:
+                                                      Border.all(color: yellow),
+                                                  color: yellow,
+                                                  borderRadius:
+                                                      BorderRadius.circular(6)),
+                                              child: Center(
+                                                child: Text(
+                                                  'Continue',
+                                                  style: bodyText14Bold(
+                                                      color: black),
+                                                ),
+                                              ),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ],
+                                  ),
+                                );
+                              }));
                         });
-
-                        await FirebaseFirestore.instance
-                            .collection('users')
-                            .doc(widget.owner)
-                            .collection("Batches")
-                            .doc(widget.docId)
-                            .collection("BatchData")
-                            .doc("Feed Served")
-                            .set({
-                          "feedServed": FieldValue.arrayUnion([
-                            {
-                              "date": dateController.text.toString(),
-                              "feedType": feedSelected,
-                              "feedQuantity": double.parse(
-                                  totalFeedController.text.toString()),
-                              "priceForFeed": priceFeed,
-                            }
-                          ]),
-                        }, SetOptions(merge: true));
-
-                        await FirebaseFirestore.instance
-                            .collection("users")
-                            .doc(widget.owner)
-                            .collection("Batches")
-                            .doc(widget.docId)
-                            .collection("BatchData")
-                            .doc("Expenses")
-                            .set({
-                          "expenseDetails": FieldValue.arrayUnion([
-                            {
-                              "Amount": (double.parse(
-                                          totalFeedController.text.toString()) /
-                                      50) *
-                                  priceFeed,
-                              "Description": "Served as Feed",
-                              "Expenses Category": "Feed Served",
-                              "Date": dateController.text.toString(),
-                            }
-                          ]),
-                        }, SetOptions(merge: true));
-
-                        Navigator.pop(context, true);
-                      }
-                    }
                   },
                   width: width(context),
                   height: 55),

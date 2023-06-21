@@ -443,9 +443,13 @@ class _ReportsWidgetState extends State<ReportsWidget> {
             if (!sortedDateKeys.contains(expenseDate)) {
               sortedDateKeys.add(expenseDate);
             }
-            expenseMap[expenseDate] = 0;
-            expenseMap[expenseDate] += double.parse(
-                value.data()!["expenseDetails"][i]["Amount"].toString());
+            if (expenseMap.containsKey(expenseDate)) {
+              expenseMap[expenseDate] += double.parse(
+                  value.data()!["expenseDetails"][i]["Amount"].toString());
+            } else {
+              expenseMap[expenseDate] = double.parse(
+                  value.data()!["expenseDetails"][i]["Amount"].toString());
+            }
           });
         }
       } else {
@@ -473,9 +477,14 @@ class _ReportsWidgetState extends State<ReportsWidget> {
             if (!sortedDateKeys.contains(incomeDate)) {
               sortedDateKeys.add(incomeDate);
             }
-            incomeMap[incomeDate] = 0;
-            incomeMap[incomeDate] += double.parse(
-                value.data()!["incomeDetails"][i]["BillAmount"].toString());
+            if (incomeMap.containsKey(incomeDate)) {
+              incomeMap[incomeDate] += double.parse(
+                  value.data()!["incomeDetails"][i]["BillAmount"].toString());
+            } else {
+              incomeMap[incomeDate] = double.parse(
+                  value.data()!["incomeDetails"][i]["BillAmount"].toString());
+              ;
+            }
           });
         }
       } else {
@@ -846,8 +855,7 @@ class _ReportsWidgetState extends State<ReportsWidget> {
             feedQuantity += double.parse(
                 value.data()!["feedServed"][i]["feedQuantity"].toString());
             costTillDate += double.parse(
-                    value.data()!["feedServed"][i]["priceForFeed"].toString()) *
-                (feedQuantity / 50);
+                value.data()!["feedServed"][i]["priceForFeed"].toString());
           }
         }
       }
@@ -859,6 +867,9 @@ class _ReportsWidgetState extends State<ReportsWidget> {
   Future<void> exportFeedReport() async {
     await checkPermissionsAndSetPath("Feed Report");
     List result = [];
+
+    // List datesCovered = [];
+    Map datesCovered = {};
 
     await FirebaseFirestore.instance
         .collection("users")
@@ -940,37 +951,59 @@ class _ReportsWidgetState extends State<ReportsWidget> {
 
           DateTime currentFeedDate = DateTime.utc(year, month, day);
 
-          await costTillDate(currentFeedDate).then((value) {
+          if (datesCovered.containsKey(currentFeedDate)) {
+            setState(() {
+              datesCovered[currentFeedDate] += double.parse(
+                  value.data()!["feedServed"][i]["feedQuantity"].toString());
+            });
+          } else {
+            setState(() {
+              datesCovered[currentFeedDate] = double.parse(
+                  value.data()!["feedServed"][i]["feedQuantity"].toString());
+            });
+          }
+        }
+
+        print("Dates covered:  $datesCovered");
+
+        int rowCovered = 1;
+        for (var keys in datesCovered.keys.toList()..sort()) {
+          await costTillDate(keys).then((value) {
             setState(() {
               result = value;
             });
-            print(result);
+            print("Feed Till date $keys: $result");
           });
 
           sheet
-              .cell(CellIndex.indexByColumnRow(columnIndex: 0, rowIndex: i + 1))
+              .cell(CellIndex.indexByColumnRow(
+                  columnIndex: 0, rowIndex: rowCovered))
               .value = currentBatchName;
 
           sheet
-              .cell(CellIndex.indexByColumnRow(columnIndex: 1, rowIndex: i + 1))
-              .value = DateFormat("dd/MM/yyyy").format(currentFeedDate);
+              .cell(CellIndex.indexByColumnRow(
+                  columnIndex: 1, rowIndex: rowCovered))
+              .value = DateFormat("dd/MM/yyyy").format(keys);
 
           sheet
-                  .cell(CellIndex.indexByColumnRow(columnIndex: 2, rowIndex: i + 1))
-                  .value =
-              double.parse(
-                  value.data()!["feedServed"][i]["feedQuantity"].toString());
+              .cell(CellIndex.indexByColumnRow(
+                  columnIndex: 2, rowIndex: rowCovered))
+              .value = datesCovered[keys];
 
           sheet
-              .cell(CellIndex.indexByColumnRow(columnIndex: 3, rowIndex: i + 1))
+              .cell(CellIndex.indexByColumnRow(
+                  columnIndex: 3, rowIndex: rowCovered))
               .value = result[0];
 
           sheet
-              .cell(CellIndex.indexByColumnRow(columnIndex: 4, rowIndex: i + 1))
+              .cell(CellIndex.indexByColumnRow(
+                  columnIndex: 4, rowIndex: rowCovered))
               .value = result[1];
 
           setState(() {
-            exportPercentage += ((i + 1) / value.data()!["feedServed"].length);
+            exportPercentage += ((rowCovered) / datesCovered.length);
+
+            rowCovered += 1;
             print(exportPercentage);
           });
         }
