@@ -11,14 +11,14 @@ class RemindersPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      floatingActionButton: FloatedButton(onTap: () {
-        NextScreen(context, AddReminder());
-      }),
+      // floatingActionButton: FloatedButton(onTap: () {
+      //   NextScreen(context, AddReminder());
+      // }),
       appBar: PreferredSize(
         child: GeneralAppBar(
           islead: true,
           bottom: true,
-          title: "Reminders",
+          title: "Notifications",
         ),
         preferredSize: Size.fromHeight(50),
       ),

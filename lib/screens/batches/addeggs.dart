@@ -18,6 +18,7 @@ class AddEggsPage extends StatefulWidget {
   int? totalEggs;
   int? pulletEggs;
   int? brokenEggs;
+  String? liveChicksThen;
   String? description;
   List? upto;
   List? after;
@@ -32,6 +33,7 @@ class AddEggsPage extends StatefulWidget {
     this.pulletEggs,
     this.brokenEggs,
     this.description,
+    this.liveChicksThen,
     this.date,
     this.upto,
     this.after,
@@ -52,6 +54,7 @@ class _AddEggsPageState extends State<AddEggsPage> {
   final brokenController = TextEditingController();
   final descriptionController = TextEditingController();
   double costPerEgg = 0.0;
+  int totalChicks = 0;
 
   DateTime date = DateTime.now();
   Future<void> getDateDetails() async {
@@ -107,6 +110,9 @@ class _AddEggsPageState extends State<AddEggsPage> {
 
       setState(() {
         date = DateTime.utc(year, month, day);
+        totalChicks = int.parse(value.data()!["NoOfBirds"].toString()) -
+            int.parse(value.data()!["Sold"].toString()) -
+            int.parse(value.data()!["Mortality"].toString());
       });
       print(date);
     });
@@ -273,6 +279,7 @@ class _AddEggsPageState extends State<AddEggsPage> {
                                 'Description':
                                     descriptionController.text.toString(),
                                 "costPerEgg": costPerEgg,
+                                "liveChicksThen": widget.liveChicksThen,
                               });
 
                               await FirebaseFirestore.instance
@@ -354,6 +361,7 @@ class _AddEggsPageState extends State<AddEggsPage> {
                                     'Description':
                                         descriptionController.text.toString(),
                                     "costPerEgg": costPerEgg,
+                                    "liveChicksThen": totalChicks.toString(),
                                   }
                                 ])
                               }, SetOptions(merge: true));

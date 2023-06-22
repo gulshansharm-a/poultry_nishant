@@ -37,7 +37,7 @@ class _BodyWeightPageState extends State<BodyWeightPage> {
   List weightDetails = [];
   List editDetails = [];
   String breedType = "";
-
+  int netBirds = 0;
   DateTime batchDate = DateTime.utc(1800, 01, 01);
   bool isLoading = true;
 
@@ -54,6 +54,9 @@ class _BodyWeightPageState extends State<BodyWeightPage> {
         .then((value) {
       setState(() {
         breedType = value.data()!["Breed"];
+        netBirds = int.parse(value.data()!["NoOfBirds"].toString()) -
+            int.parse(value.data()!["Sold"].toString()) -
+            int.parse(value.data()!["Mortality"].toString());
       });
       List dates = value.data()!["date"].toString().split("/");
       int month = 0;
@@ -269,17 +272,26 @@ class _BodyWeightPageState extends State<BodyWeightPage> {
                   value.data()!["weightDetails"][i]["bodyWeight"].toString()),
               "date": DateFormat("dd/MM/yyyy").format(bodyWeightDate),
               "day": bodyWeightDate.difference(batchDate).inDays + 1,
-              "fcr": double.parse(((feedGivenDay * 1000) /
+              "fcr": double.parse((((feedGivenDay * 1000) /
+                              double.parse(value
+                                  .data()!["weightDetails"][i]["bodyWeight"]
+                                  .toString())) /
                           double.parse(value
-                              .data()!["weightDetails"][i]["bodyWeight"]
+                              .data()!["weightDetails"][i]["liveChicksThen"]
                               .toString()))
                       .toString())
                   .toStringAsFixed(3),
+              "liveChicksThen": int.parse(value
+                  .data()!["weightDetails"][i]["liveChicksThen"]
+                  .toString()),
             });
 
             editDetails.add({
               "date": value.data()!["weightDetails"][i]["date"],
               "bodyWeight": value.data()!["weightDetails"][i]["bodyWeight"],
+              "liveChicksThen": int.parse(value
+                  .data()!["weightDetails"][i]["liveChicksThen"]
+                  .toString()),
             });
           });
         }
@@ -485,6 +497,8 @@ class _BodyWeightPageState extends State<BodyWeightPage> {
                                       ["bodyWeight"]
                                   .toString()),
                               date: weightDetails[index]["date"],
+                              liveChicksThen: weightDetails[index]
+                                  ["liveChicksThen"],
                               isEdit: true,
                               batchIndex: index,
                               upto: editDetails.sublist(0, index),

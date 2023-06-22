@@ -45,6 +45,7 @@ class _AddFeedServedPageState extends State<AddFeedServedPage> {
   Map stockAvailable = {};
   Map prices = {};
   double priceFeed = 0.0;
+  int netChicks = 0;
 
   Future<void> getBatchInformation() async {
     await FirebaseFirestore.instance
@@ -99,6 +100,9 @@ class _AddFeedServedPageState extends State<AddFeedServedPage> {
       //get individual dates!
       setState(() {
         batchDate = DateTime.utc(year, month, day);
+        netChicks = int.parse(value.data()!["NoOfBirds"].toString()) -
+            int.parse(value.data()!["Sold"].toString()) -
+            int.parse(value.data()!["Mortality"].toString());
       });
     });
   }
@@ -490,6 +494,8 @@ class _AddFeedServedPageState extends State<AddFeedServedPage> {
                                                                     .toString()),
                                                         "priceForFeed":
                                                             priceFeed,
+                                                        "liveChicksThen":
+                                                            netChicks,
                                                       }
                                                     ]),
                                                   }, SetOptions(merge: true));

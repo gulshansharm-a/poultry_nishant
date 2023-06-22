@@ -26,7 +26,6 @@ class _ExpensesCategoryPageState extends State<ExpensesCategoryPage> {
       isLoading = true;
       expensesList.clear();
     });
-    expensesList.clear();
     await FirebaseFirestore.instance
         .collection("users")
         .doc(FirebaseAuth.instance.currentUser!.uid)
@@ -45,7 +44,7 @@ class _ExpensesCategoryPageState extends State<ExpensesCategoryPage> {
             .collection("settings")
             .doc("Expense Type")
             .set({
-          "expenseType": expensesList,
+          "expenseType": ["Chicks"],
         });
       }
     });

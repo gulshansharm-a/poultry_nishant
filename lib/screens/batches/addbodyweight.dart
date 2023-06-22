@@ -14,6 +14,7 @@ class AddBodyWeight extends StatefulWidget {
   String owner;
   String? date;
   bool? isEdit = false;
+  int? liveChicksThen;
   int? batchIndex;
   double? bodyWeight;
   List? upto;
@@ -26,6 +27,7 @@ class AddBodyWeight extends StatefulWidget {
     this.bodyWeight,
     this.date,
     this.batchIndex,
+    this.liveChicksThen,
     this.isEdit,
     this.upto,
     this.after,
@@ -40,6 +42,7 @@ class _AddBodyWeightState extends State<AddBodyWeight> {
       text: DateFormat("dd/MMM/yyyy").format(DateTime.now()).toLowerCase());
   TextEditingController bodyWeightController = TextEditingController();
   DateTime date = DateTime.now();
+  int netChicks = 0;
   Future<void> getDateDetails() async {
     await FirebaseFirestore.instance
         .collection('users')
@@ -93,6 +96,9 @@ class _AddBodyWeightState extends State<AddBodyWeight> {
 
       setState(() {
         date = DateTime.utc(year, month, day);
+        netChicks = int.parse(value.data()!["NoOfBirds"].toString()) -
+            int.parse(value.data()!["Sold"].toString()) -
+            int.parse(value.data()!["Mortality"].toString());
       });
       print(date);
     });
@@ -167,6 +173,7 @@ class _AddBodyWeightState extends State<AddBodyWeight> {
                       "date": dateController.text.toString(),
                       "bodyWeight":
                           double.parse(bodyWeightController.text.toString()),
+                      "liveChicksThen": widget.liveChicksThen,
                     });
 
                     await FirebaseFirestore.instance
@@ -199,6 +206,7 @@ class _AddBodyWeightState extends State<AddBodyWeight> {
                             "date": dateController.text.toString(),
                             "bodyWeight": double.parse(
                                 bodyWeightController.text.toString()),
+                            "liveChicksThen": netChicks,
                           }
                         ]),
                       },

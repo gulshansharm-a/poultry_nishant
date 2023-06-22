@@ -26,6 +26,8 @@ class _AnalysisWidgetState extends State<AnalysisWidget> {
   double expensesDiluted = 0.0;
   double feedToday = 0.0;
   double totalProfit = 0.0;
+  double feedIntakePerBird = 0.0;
+  double perBirdFeedCost = 0.0;
   int loadStatus = 0;
   List analysis = [
     {
@@ -115,6 +117,14 @@ class _AnalysisWidgetState extends State<AnalysisWidget> {
                           .data()!["incomeDetails"][i]["CostPerBird"]
                           .toString())));
             });
+            print(totalProfit);
+            print(double.parse(
+                value.data()!["incomeDetails"][i]["BillAmount"].toString()));
+            print((int.parse(
+                    value.data()!["incomeDetails"][i]["Quantity"].toString()) *
+                double.parse(value
+                    .data()!["incomeDetails"][i]["CostPerBird"]
+                    .toString())));
           }
           setState(() {
             income += double.parse(
@@ -242,7 +252,7 @@ class _AnalysisWidgetState extends State<AnalysisWidget> {
       int noBirds = int.parse(value.data()!["NoOfBirds"].toString());
 
       setState(() {
-        netBirds = noBirds - mortality - sold;
+        netBirds = noBirds - mortality;
         String costBird = value.data()!["CostPerBird"] ?? "";
         if (costBird == "") {
           originalPrice = 0;
@@ -297,15 +307,29 @@ class _AnalysisWidgetState extends State<AnalysisWidget> {
         .then((value) {
       if (value.exists) {
         for (int i = 0; i < value.data()!["feedServed"].length; i++) {
-          if (value.data()!["feedServed"][i]["date"] ==
-              DateFormat("dd/MMM/yyyy")
-                  .format(DateTime.now())
-                  .toString()
-                  .toLowerCase()) {
+          // if (value.data()!["feedServed"][i]["date"] ==
+          //     DateFormat("dd/MMM/yyyy")
+          //         .format(DateTime.now())
+          //         .toString()
+          //         .toLowerCase()) {}
+          setState(() {
             feedToday += double.parse(
                 value.data()!["feedServed"][i]["feedQuantity"].toString());
-          }
-          setState(() {
+
+            feedIntakePerBird += ((double.parse(value
+                        .data()!["feedServed"][i]["feedQuantity"]
+                        .toString()) *
+                    1000) /
+                double.parse(value
+                    .data()!["feedServed"][i]["liveChicksThen"]
+                    .toString()));
+
+            perBirdFeedCost += ((double.parse(
+                    value.data()!["feedServed"][i]["priceForFeed"].toString()) /
+                double.parse(value
+                    .data()!["feedServed"][i]["liveChicksThen"]
+                    .toString())));
+
             priceSubTotal += double.parse(
                 value.data()!["feedServed"][i]["priceForFeed"].toString());
             feedQuantity += double.parse(
@@ -338,15 +362,13 @@ class _AnalysisWidgetState extends State<AnalysisWidget> {
     });
 
     setState(() {
-      analysis[2]["c2data1"] = netBirds == 0
-          ? "0"
-          : "Rs. ${(priceSubTotal / netBirds).toStringAsFixed(2)}";
+      analysis[2]["c2data1"] = "Rs. ${(perBirdFeedCost).toStringAsFixed(2)}";
 
       perBirdIntake = (feedToday * 1000) / netBirds;
 
       analysis[3]["c1data1"] = netBirds == 0
           ? "0 gms"
-          : "${((feedToday * 1000) / netBirds).toStringAsFixed(2)} gms";
+          : "${((feedIntakePerBird).toStringAsFixed(2))} gms";
     });
     setState(() {
       loadStatus += 1;
@@ -356,7 +378,7 @@ class _AnalysisWidgetState extends State<AnalysisWidget> {
   Future<void> getFeedPerformance() async {
     if (!mounted) return;
     double avgWeight = 0.0;
-    int netBirds = 0;
+    // int netBirds = 0;
     int length = 0;
 
     await FirebaseFirestore.instance
@@ -383,22 +405,6 @@ class _AnalysisWidgetState extends State<AnalysisWidget> {
       }
     });
 
-    await FirebaseFirestore.instance
-        .collection("users")
-        .doc(widget.owner)
-        .collection("Batches")
-        .doc(widget.batchId)
-        .get()
-        .then((value) {
-      int mortality = int.parse(value.data()!["Mortality"].toString());
-      int sold = int.parse(value.data()!["Sold"].toString());
-      int noBirds = int.parse(value.data()!["NoOfBirds"].toString());
-
-      setState(() {
-        netBirds = noBirds - mortality - sold;
-      });
-    });
-
     setState(() {
       print("Avg Weight : $avgWeight");
       print("length: $length");
@@ -408,13 +414,11 @@ class _AnalysisWidgetState extends State<AnalysisWidget> {
         avgBodyWeight = avgWeight / length;
       }
 
-      perBirdIntake = (feedToday * 1000) / netBirds;
-
       analysis[3]["c2data1"] = "${avgBodyWeight} gms";
 
-      analysis[3]["c3data1"] = netBirds == 0 || avgBodyWeight == 0
+      analysis[3]["c3data1"] = avgBodyWeight == 0
           ? "0"
-          : "${(perBirdIntake / avgBodyWeight).toStringAsFixed(2)}";
+          : "${(feedIntakePerBird / avgBodyWeight).toStringAsFixed(2)}";
     });
 
     setState(() {

@@ -188,9 +188,7 @@ class _AddIncomePageState extends State<AddIncomePage> {
 
           setState(() {
             totalFeedPrice += double.parse(
-                    value.data()!["feedServed"][i]["feedQuantity"].toString()) *
-                double.parse(
-                    value.data()!["feedServed"][i]["priceForFeed"].toString());
+                value.data()!["feedServed"][i]["priceForFeed"].toString());
           });
         }
       }
@@ -230,11 +228,10 @@ class _AddIncomePageState extends State<AddIncomePage> {
       setState(() {
         mortality = int.parse(value.data()!["Mortality"].toString());
       });
-      int sold = int.parse(value.data()!["Sold"].toString());
       int noBirds = int.parse(value.data()!["NoOfBirds"].toString());
 
       setState(() {
-        netBirds = noBirds - mortality - sold;
+        netBirds = noBirds - mortality;
         String costBird = value.data()!["CostPerBird"] ?? "";
         if (costBird == "") {
           originalPrice = 0;

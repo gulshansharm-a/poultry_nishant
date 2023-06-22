@@ -175,10 +175,8 @@ class _EggsPageState extends State<EggsPage> {
               "broken": value.data()!["eggDetails"][i]["Broken"],
               "costPerEgg": value.data()!["eggDetails"][i]["costPerEgg"],
               "pulletEggs": value.data()!["eggDetails"][i]["PulletEggs"],
-              "layingPercentage": double.parse((value.data()!["eggDetails"][i]
-                          ["EggTrayCollection"] /
-                      totalChicks)
-                  .toString()),
+              "liveChicksThen": value.data()!["eggDetails"][i]
+                  ["liveChicksThen"],
               "description": value.data()!["eggDetails"][i]["Description"],
             });
 
@@ -192,6 +190,8 @@ class _EggsPageState extends State<EggsPage> {
               'Broken': int.parse(
                   value.data()!["eggDetails"][i]["Broken"].toString()),
               'Description': value.data()!["eggDetails"][i]["Description"],
+              "liveChicksThen": value.data()!["eggDetails"][i]
+                  ["liveChicksThen"],
               "costPerEgg": value.data()!["eggDetails"][i]["costPerEgg"],
             });
           });
@@ -408,6 +408,8 @@ class _EggsPageState extends State<EggsPage> {
                                 pulletEggs: eggDetails[index]["pulletEggs"],
                                 brokenEggs: eggDetails[index]["broken"],
                                 totalEggs: eggDetails[index]["eggCollection"],
+                                liveChicksThen: eggDetails[index]
+                                    ["liveChicksThen"],
                                 upto: editDetails.sublist(0, index),
                                 after: editDetails.sublist(
                                   index + 1,
@@ -462,7 +464,7 @@ class _EggsPageState extends State<EggsPage> {
                                     ],
                                   ),
                                   Text(
-                                    "Laying Percentage: ${double.parse(eggDetails[index]["layingPercentage"].toString()).toStringAsFixed(2)}%",
+                                    "Laying Percentage: ${(eggDetails[index]["eggCollection"] / double.parse(eggDetails[index]["liveChicksThen"].toString()) * 100).toStringAsFixed(2)}%",
                                     style: bodyText12normal(color: black),
                                   )
                                 ],
