@@ -124,6 +124,9 @@ class _AddFeedServedPageState extends State<AddFeedServedPage> {
   }
 
   Future<void> getStockAvailable(String feed) async {
+    setState(() {
+      prices.clear();
+    });
     await FirebaseFirestore.instance
         .collection("users")
         .doc(widget.owner)
@@ -173,6 +176,7 @@ class _AddFeedServedPageState extends State<AddFeedServedPage> {
         }
       }
     });
+    print(prices);
   }
 
   void initState() {
@@ -229,12 +233,14 @@ class _AddFeedServedPageState extends State<AddFeedServedPage> {
                           onchanged: (value) {
                             setState(() {
                               feedSelected = value;
+                              stockForType = 0;
                             });
                             getStockAvailable(value);
                           },
                         ),
                         CustomTextField(
-                          hintText: "Available in KG: $stockForType",
+                          hintText:
+                              "Available in KG: ${stockForType.toStringAsFixed(2)}",
                           enabled: false,
                         ),
                         CustomTextField(
@@ -359,7 +365,7 @@ class _AddFeedServedPageState extends State<AddFeedServedPage> {
                                                         .parse((totalFeedUsed /
                                                                 50)
                                                             .toStringAsPrecision(
-                                                                1));
+                                                                2));
 
                                                     for (var keys
                                                         in feedMap.keys.toList()
@@ -407,7 +413,7 @@ class _AddFeedServedPageState extends State<AddFeedServedPage> {
                                                                     "used": {
                                                                       keys: FieldValue
                                                                           .increment(
-                                                                              bagsUsed),
+                                                                              double.parse(bagsUsed.toStringAsFixed(2))),
                                                                     }
                                                                   }
                                                                 }
@@ -442,7 +448,7 @@ class _AddFeedServedPageState extends State<AddFeedServedPage> {
                                                                     "used": {
                                                                       keys: FieldValue
                                                                           .increment(
-                                                                              currentLeft),
+                                                                              double.parse(currentLeft.toStringAsFixed(2))),
                                                                     }
                                                                   }
                                                                 }
@@ -469,6 +475,8 @@ class _AddFeedServedPageState extends State<AddFeedServedPage> {
                                                       }
                                                     }
                                                   });
+
+                                                  print(priceFeed);
 
                                                   await FirebaseFirestore
                                                       .instance
@@ -520,6 +528,8 @@ class _AddFeedServedPageState extends State<AddFeedServedPage> {
                                                         "Date": dateController
                                                             .text
                                                             .toString(),
+                                                        "NoOfChicksThen":
+                                                            netChicks,
                                                       }
                                                     ]),
                                                   }, SetOptions(merge: true));

@@ -75,7 +75,8 @@ class _ChickFeedRequirementPageState extends State<ChickFeedRequirementPage> {
 
     setState(() {
       requirementDetails.sort((first, second) {
-        return first["day"].compareTo(second["day"]);
+        return int.parse(first["day"].toString())
+            .compareTo(int.parse(second["day"].toString()));
       });
     });
     setState(() {

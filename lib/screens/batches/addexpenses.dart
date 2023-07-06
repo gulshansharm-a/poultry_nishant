@@ -15,6 +15,7 @@ class AddExpensesPage extends StatefulWidget {
   String docId;
   String owner;
   bool? isEdit = false;
+  int? noOfChicksThen;
   double? amount;
   String? date;
   String? expensesCategory;
@@ -33,6 +34,7 @@ class AddExpensesPage extends StatefulWidget {
     this.date,
     this.expensesCategory,
     this.upto,
+    this.noOfChicksThen,
     this.after,
     this.containsChicks,
   });
@@ -54,6 +56,7 @@ class _AddExpensesPageState extends State<AddExpensesPage> {
   final descriptionController = TextEditingController();
   String expenseTypeString = "";
   int noChicks = 0;
+  int noChicksThen = 0;
 
   DateTime batchDate = DateTime.utc(1800, 01, 01);
   int length = 0;
@@ -145,6 +148,9 @@ class _AddExpensesPageState extends State<AddExpensesPage> {
       setState(() {
         batchDate = DateTime.utc(year, month, day);
         noChicks = int.parse(value.data()!["NoOfBirds"].toString());
+        noChicksThen = int.parse(value.data()!["NoOfBirds"].toString()) -
+            int.parse(value.data()!["Sold"].toString()) -
+            int.parse(value.data()!["Mortality"].toString());
       });
     });
   }
@@ -302,6 +308,7 @@ class _AddExpensesPageState extends State<AddExpensesPage> {
                                             noChicks
                                         : double.parse(
                                             amountController.text.toString()),
+                                    "NoOfChicksThen": widget.noOfChicksThen,
                                     'Description':
                                         descriptionController.text.toString(),
                                   }
@@ -417,6 +424,8 @@ class _AddExpensesPageState extends State<AddExpensesPage> {
                                                                     descriptionController
                                                                         .text
                                                                         .toString(),
+                                                                "NoOfChicksThen":
+                                                                    noChicksThen,
                                                               }
                                                             ])
                                                           },
@@ -492,6 +501,7 @@ class _AddExpensesPageState extends State<AddExpensesPage> {
                                       amountController.text.toString()),
                                   'Description':
                                       descriptionController.text.toString(),
+                                  "NoOfChicksThen": noChicksThen,
                                 }
                               ])
                             }, SetOptions(merge: true));

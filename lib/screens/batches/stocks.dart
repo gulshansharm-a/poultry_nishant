@@ -14,7 +14,8 @@ class StocksPage extends StatefulWidget {
 }
 
 class MyStocksPageState extends State<StocksPage> {
-  List stocks = [];
+  Map stocks = {};
+  List stockList = [];
 
   Future<void> getStocks() async {
     await FirebaseFirestore.instance
@@ -85,13 +86,16 @@ class MyStocksPageState extends State<StocksPage> {
                 String orderDate = DateFormat("dd/MM/yyyy")
                     .format(DateTime.utc(year, month, day));
                 setState(() {
-                  stocks.add({
-                    "quantityReceived": quantityReceived,
-                    "feedCompany": orderData.data()![orderKeys]["feedCompany"],
-                    "feedType": orderData.data()![orderKeys]["feedType"],
-                    "date": orderDate,
-                    "served": 0,
-                    "remaining": quantityReceived,
+                  stocks.addAll({
+                    orderKeys: {
+                      "quantityReceived": quantityReceived,
+                      "feedCompany": orderData.data()![orderKeys]
+                          ["feedCompany"],
+                      "feedType": orderData.data()![orderKeys]["feedType"],
+                      "date": orderDate,
+                      "served": 0,
+                      "remaining": quantityReceived,
+                    }
                   });
                 });
               });
@@ -100,6 +104,8 @@ class MyStocksPageState extends State<StocksPage> {
         }
       }
     });
+
+    print(stocks);
 
     await FirebaseFirestore.instance
         .collection("users")
@@ -112,18 +118,35 @@ class MyStocksPageState extends State<StocksPage> {
       for (var feedKeys in feedMap.keys.toList()) {
         Map orderMap =
             value.data()!["feedTypeQuantity"][feedKeys]["used"] ?? {};
-        int index = 0;
+
         for (var orderKeys in orderMap.keys.toList()..sort()) {
           setState(() {
-            stocks[index]["served"] = double.parse(value
+            stocks[orderKeys]["served"] = double.parse(value
                 .data()!["feedTypeQuantity"][feedKeys]["used"][orderKeys]
                 .toString());
-            stocks[index]["remaining"] =
-                stocks[index]["quantityReceived"] - stocks[index]["served"];
+            stocks[orderKeys]["remaining"] = stocks[orderKeys]
+                    ["quantityReceived"] -
+                stocks[orderKeys]["served"];
           });
         }
       }
     });
+
+    print(stocks);
+
+    for (var orderKeys in stocks.keys.toList()..sort()) {
+      print(orderKeys);
+      setState(() {
+        stockList.add({
+          "quantityReceived": stocks[orderKeys]["quantityReceived"],
+          "feedCompany": stocks[orderKeys]["feedCompany"],
+          "feedType": stocks[orderKeys]["feedType"],
+          "date": stocks[orderKeys]["date"],
+          "served": stocks[orderKeys]["served"],
+          "remaining": stocks[orderKeys]["remaining"],
+        });
+      });
+    }
   }
 
   void initState() {
@@ -167,32 +190,32 @@ class MyStocksPageState extends State<StocksPage> {
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
                             Text(
-                              "${stocks[index]["feedType"]}",
+                              "${stockList[index]["feedType"]}",
                               style: bodyText15w500(color: black),
                             ),
                             Text(
-                              "${stocks[index]["date"]}",
+                              "${stockList[index]["date"]}",
                               style: bodyText12normal(color: darkGray),
                             )
                           ],
                         ),
                         Text(
-                          "${stocks[index]["feedCompany"]}",
+                          "${stockList[index]["feedCompany"]}",
                           style: bodyText12normal(color: darkGray),
                         ),
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
                             Text(
-                              "Received: ${stocks[index]["quantityReceived"]} bags",
+                              "Received: ${stockList[index]["quantityReceived"]} bags",
                               style: bodyText10normal(color: black),
                             ),
                             Text(
-                              "Served: ${double.parse(stocks[index]["served"].toString()).toStringAsFixed(2)} bags",
+                              "Served: ${double.parse(stockList[index]["served"].toString()).toStringAsFixed(2)} bags",
                               style: bodyText10normal(color: black),
                             ),
                             Text(
-                              "Remaining: ${double.parse(stocks[index]["remaining"].toString()).toStringAsFixed(2)} bags",
+                              "Remaining: ${double.parse(stockList[index]["remaining"].toString()).toStringAsFixed(2)} bags",
                               style: bodyText10normal(color: black),
                             ),
                           ],
@@ -205,7 +228,7 @@ class MyStocksPageState extends State<StocksPage> {
                   height: 0,
                 );
               },
-              itemCount: stocks.length),
+              itemCount: stockList.length),
           Divider(
             height: 0,
           ),

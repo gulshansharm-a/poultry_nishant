@@ -3,7 +3,8 @@ import 'package:poultry_app/utils/constants.dart';
 
 class CustomSearchBox extends StatelessWidget {
   final String? hint;
-  const CustomSearchBox({super.key, this.hint});
+  final bool? isEnabled; 
+  const CustomSearchBox({super.key, this.hint, required this.isEnabled});
 
   @override
   Widget build(BuildContext context) {
@@ -15,9 +16,11 @@ class CustomSearchBox extends StatelessWidget {
         child: Padding(
           padding: const EdgeInsets.only(bottom: 2.5),
           child: TextFormField(
+            enabled: this.isEnabled,
             style: bodyText16normal(color: black),
             cursorColor: black,
             decoration: InputDecoration(
+              
                 hintText: hint ?? "Search",
                 hintStyle: bodyText15normal(color: gray),
                 // filled: true,

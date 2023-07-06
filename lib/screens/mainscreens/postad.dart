@@ -80,71 +80,70 @@ class _PostAdPageState extends State<PostAdPage> {
                     style: bodyText18w600(color: black),
                   ),
                 ),
-                DottedBorder(
-                  borderType: BorderType.RRect,
-                  dashPattern: [10, 5],
-                  strokeWidth: 2,
-                  color: darkGray,
-                  radius: Radius.circular(15),
-                  child: Container(
-                    width: width(context),
-                    height: width(context) * .35,
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(
-                          Icons.file_upload_outlined,
-                          size: 50,
-                          color: darkGray,
-                        ),
-                        addVerticalSpace(10),
-                        GestureDetector(
-                          onTap: () async {
-                            bool? isCamera = await showDialog(
-                                context: context,
-                                builder: (context) => AlertDialog(
-                                      content: Column(
-                                          mainAxisSize: MainAxisSize.min,
-                                          children: [
-                                            ElevatedButton(
-                                              child: Text("Camera"),
-                                              onPressed: () {
-                                                Navigator.of(context).pop(true);
-                                              },
-                                            ),
-                                            const SizedBox(
-                                              height: 20,
-                                            ),
-                                            ElevatedButton(
-                                              child: Text("Gallery"),
-                                              onPressed: () {
-                                                Navigator.of(context)
-                                                    .pop(false);
-                                              },
-                                            ),
-                                          ]),
-                                    ));
+                GestureDetector(
+                  onTap: () async {
+                    bool? isCamera = await showDialog(
+                        context: context,
+                        builder: (context) => AlertDialog(
+                              content: Column(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    ElevatedButton(
+                                      child: Text("Camera"),
+                                      onPressed: () {
+                                        Navigator.of(context).pop(true);
+                                      },
+                                    ),
+                                    const SizedBox(
+                                      height: 20,
+                                    ),
+                                    ElevatedButton(
+                                      child: Text("Gallery"),
+                                      onPressed: () {
+                                        Navigator.of(context).pop(false);
+                                      },
+                                    ),
+                                  ]),
+                            ));
 
-                            if (isCamera == null) return;
+                    if (isCamera == null) return;
 
-                            final ImagePicker picker = ImagePicker();
-                            XFile? tempImage = await picker.pickImage(
-                                source: isCamera
-                                    ? ImageSource.camera
-                                    : ImageSource.gallery);
+                    final ImagePicker picker = ImagePicker();
+                    XFile? tempImage = await picker.pickImage(
+                        source: isCamera
+                            ? ImageSource.camera
+                            : ImageSource.gallery);
 
-                            setState(() {
-                              imagePicked = tempImage;
-                            });
+                    setState(() {
+                      imagePicked = tempImage;
+                    });
 
-                            // print(imagePicked!.path);
-                          },
-                          child: Text(
+                    // print(imagePicked!.path);
+                  },
+                  child: DottedBorder(
+                    borderType: BorderType.RRect,
+                    dashPattern: [10, 5],
+                    strokeWidth: 2,
+                    color: darkGray,
+                    radius: Radius.circular(15),
+                    child: Container(
+                      width: width(context),
+                      height: width(context) * .35,
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            Icons.file_upload_outlined,
+                            size: 50,
+                            color: darkGray,
+                          ),
+                          addVerticalSpace(10),
+                          Text(
                             "Upload image",
                             style: bodyText12w500(color: darkGray),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
                   ),
                 ),
@@ -292,8 +291,11 @@ class _PostAdPageState extends State<PostAdPage> {
                           } else {
                             FirebaseStorage storage = FirebaseStorage.instance;
 
-                            final reference = storage.ref().child(
-                                "ads/${FirebaseAuth.instance.currentUser!.uid}");
+                            final reference = storage
+                                .ref()
+                                .child(
+                                    "ads/${FirebaseAuth.instance.currentUser!.uid}")
+                                .child("${imagePicked!.path.split('/').last}");
 
                             final UploadTask upload =
                                 reference.putFile(File(imagePicked!.path));

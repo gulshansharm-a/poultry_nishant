@@ -236,33 +236,40 @@ class MyNotesPageState extends State<NotesPage> {
                       itemBuilder: (context, index) {
                         return InkWell(
                           onTap: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => AddNotesPage(
-                                  batchId: batchDocIds[widget.index],
-                                  owner: widget.owner,
-                                  isEdit: true,
-                                  batchIndex: index,
-                                  title: batchNotes[index]["title"],
-                                  description: batchNotes[index]["description"],
-                                  date: batchNotes[index]["date"],
-                                  upto: editDetails.sublist(0, index),
-                                  after: editDetails.sublist(
-                                    index + 1,
+                            if (widget.accessLevel == 1) {
+                              //view
+                              Fluttertoast.showToast(
+                                  msg:
+                                      "You don't have the required permissions to edit!");
+                            } else {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => AddNotesPage(
+                                    batchId: batchDocIds[widget.index],
+                                    owner: widget.owner,
+                                    isEdit: true,
+                                    batchIndex: index,
+                                    title: batchNotes[index]["title"],
+                                    description: batchNotes[index]
+                                        ["description"],
+                                    date: batchNotes[index]["date"],
+                                    upto: editDetails.sublist(0, index),
+                                    after: editDetails.sublist(
+                                      index + 1,
+                                    ),
                                   ),
                                 ),
-                              ),
-                            ).then((value) {
-                              if (value == null) {
-                                return;
-                              } else {
-                                if (value) {
-                                  getNotes();
+                              ).then((value) {
+                                if (value == null) {
+                                  return;
+                                } else {
+                                  if (value) {
+                                    getNotes();
+                                  }
                                 }
-                              }
-                            });
-                            ;
+                              });
+                            }
                           },
                           child: Container(
                             padding: EdgeInsets.symmetric(
@@ -362,39 +369,54 @@ class MyNotesPageState extends State<NotesPage> {
                                                               20),
                                                           InkWell(
                                                             onTap: () async {
-                                                              await FirebaseFirestore
-                                                                  .instance
-                                                                  .collection(
-                                                                      'users')
-                                                                  .doc(widget
-                                                                      .owner)
-                                                                  .collection(
-                                                                      'Batches')
-                                                                  .doc(batchDocIds[
-                                                                      widget
-                                                                          .index])
-                                                                  .collection(
-                                                                      'BatchData')
-                                                                  .doc('Notes')
-                                                                  .set({
-                                                                "notes": editDetails
-                                                                        .sublist(
-                                                                            0,
-                                                                            index) +
-                                                                    editDetails
-                                                                        .sublist(
-                                                                      index + 1,
-                                                                    ),
-                                                              });
+                                                              if (widget
+                                                                      .accessLevel ==
+                                                                  1) {
+                                                                //view
+                                                                Fluttertoast
+                                                                    .showToast(
+                                                                        msg:
+                                                                            "You don't have the required permissions to edit!");
+                                                                Navigator.pop(
+                                                                    context,
+                                                                    false);
+                                                              } else {
+                                                                await FirebaseFirestore
+                                                                    .instance
+                                                                    .collection(
+                                                                        'users')
+                                                                    .doc(widget
+                                                                        .owner)
+                                                                    .collection(
+                                                                        'Batches')
+                                                                    .doc(batchDocIds[
+                                                                        widget
+                                                                            .index])
+                                                                    .collection(
+                                                                        'BatchData')
+                                                                    .doc(
+                                                                        'Notes')
+                                                                    .set({
+                                                                  "notes": editDetails
+                                                                          .sublist(
+                                                                              0,
+                                                                              index) +
+                                                                      editDetails
+                                                                          .sublist(
+                                                                        index +
+                                                                            1,
+                                                                      ),
+                                                                });
 
-                                                              Fluttertoast
-                                                                  .showToast(
-                                                                      msg:
-                                                                          "Deletion successful!");
+                                                                Fluttertoast
+                                                                    .showToast(
+                                                                        msg:
+                                                                            "Deletion successful!");
 
-                                                              Navigator.pop(
-                                                                  context,
-                                                                  true);
+                                                                Navigator.pop(
+                                                                    context,
+                                                                    true);
+                                                              }
                                                             },
                                                             child: Container(
                                                               height: 40,

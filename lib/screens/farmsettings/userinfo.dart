@@ -131,12 +131,12 @@ class UserInformationPageState extends State<UserInformationPage> {
                                 child: CustomTextField(
                               hintText: city,
                             )),
-                            addHorizontalySpace(20),
-                            Expanded(
-                              child: CustomTextField(
-                                hintText: "Village",
-                              ),
-                            ),
+                            // addHorizontalySpace(20),
+                            // Expanded(
+                            //   child: CustomTextField(
+                            //     hintText: "Village",
+                            //   ),
+                            // ),
                           ],
                         ),
                         CustomTextField(hintText: farmCapacity),

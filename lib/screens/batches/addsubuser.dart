@@ -46,7 +46,7 @@ class _AddSubUserPageState extends State<AddSubUserPage> {
   void initState() {
     super.initState();
     setState(() {
-      selectedValue = "View only";
+      selectedValue = "View Only";
     });
   }
 
@@ -115,7 +115,7 @@ class _AddSubUserPageState extends State<AddSubUserPage> {
                                       hint: Text(
                                         selectedValue.isNotEmpty
                                             ? selectedValue
-                                            : "View only",
+                                            : "View Only",
                                         style:
                                             bodyText16normal(color: darkGray),
                                       ),

@@ -62,6 +62,9 @@ class _StockInWidgetState extends State<StockInWidget> {
   }
 
   Future<void> getStockFromDB(String feedType, String batchName) async {
+    setState(() {
+      stockForType = 0;
+    });
     int index = batch.indexOf(batchName);
     await FirebaseFirestore.instance
         .collection('users')
@@ -98,6 +101,8 @@ class _StockInWidgetState extends State<StockInWidget> {
               } else {
                 Map usedMap = feedTypeQuantity["used"] ?? {};
                 for (var key in usedMap.keys) {
+                  availableStockDetails[key] -=
+                      double.parse(usedMap[key].toString()).ceil();
                   stockForType -= double.parse(usedMap[key].toString()).ceil();
                 }
               }

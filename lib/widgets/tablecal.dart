@@ -28,7 +28,7 @@ class _ShowCalendarState extends State<ShowCalendar> {
       insetPadding: EdgeInsets.zero,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
       content: Container(
-        height: 300,
+        height: 350,
         width: 275,
         child: TableCalendar(
           calendarStyle: CalendarStyle(
@@ -78,7 +78,7 @@ class _ShowCalendarState extends State<ShowCalendar> {
                       widget.controller.text = currentDate.toLowerCase();
                       goBack(context);
                     }
-                  } 
+                  }
                 }
               });
             }

@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 import 'package:poultry_app/screens/batches/addmedicine.dart';
 import 'package:poultry_app/screens/batches/batches.dart';
 import 'package:poultry_app/screens/farmsettings/userinfo.dart';
@@ -336,33 +337,40 @@ class MyMedicinePageState extends State<MedicinePage> {
                   itemBuilder: (context, index) {
                     return InkWell(
                       onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => AddMedicinePage(
-                              batchId: batchDocIds[widget.index],
-                              owner: widget.owner,
-                              isEdit: true,
-                              date: medicineDetails[index]["date"],
-                              description: medicineDetails[index]
-                                  ["description"],
-                              medicine: medicineDetails[index]["medicine"],
-                              batchIndex: index,
-                              upto: editDetails.sublist(0, index),
-                              after: editDetails.sublist(
-                                index + 1,
+                        if (widget.accessLevel == 1) {
+                          //view
+                          Fluttertoast.showToast(
+                              msg:
+                                  "You don't have the required permissions to edit!");
+                        } else {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => AddMedicinePage(
+                                batchId: batchDocIds[widget.index],
+                                owner: widget.owner,
+                                isEdit: true,
+                                date: medicineDetails[index]["date"],
+                                description: medicineDetails[index]
+                                    ["description"],
+                                medicine: medicineDetails[index]["medicine"],
+                                batchIndex: index,
+                                upto: editDetails.sublist(0, index),
+                                after: editDetails.sublist(
+                                  index + 1,
+                                ),
                               ),
                             ),
-                          ),
-                        ).then((value) {
-                          if (value == null) {
-                            return;
-                          } else {
-                            if (value) {
-                              getBatchDetails();
+                          ).then((value) {
+                            if (value == null) {
+                              return;
+                            } else {
+                              if (value) {
+                                getBatchDetails();
+                              }
                             }
-                          }
-                        });
+                          });
+                        }
                       },
                       child: Container(
                         padding:

@@ -121,7 +121,7 @@ class SubUserPageState extends State<SubUserPage> {
                       ),
                       subtitle: Text(subUserList[index]['type']),
                       trailing: InkWell(
-                        child: Image.asset("assets/images/delete.png"),
+                        child: Icon(Icons.delete_outline_rounded),
                         onTap: () => showDialog(
                             context: context,
                             builder: (context) {
@@ -183,23 +183,34 @@ class SubUserPageState extends State<SubUserPage> {
                                               addHorizontalySpace(20),
                                               InkWell(
                                                 onTap: () async {
-                                                  await FirebaseFirestore
-                                                      .instance
-                                                      .collection("batches")
-                                                      .doc(batchDocIds[
-                                                          widget.index])
-                                                      .update({
-                                                    "userIDs": subUserList
-                                                            .sublist(0, index) +
-                                                        subUserList.sublist(
-                                                          index + 1,
-                                                        ),
-                                                  });
-                                                  Fluttertoast.showToast(
-                                                      msg:
-                                                          "Deletion successful!");
+                                                  if (widget.accessLevel == 1) {
+                                                    //view
+                                                    Fluttertoast.showToast(
+                                                        msg:
+                                                            "You don't have the required permissions to edit!");
+                                                    Navigator.pop(
+                                                        context, false);
+                                                  } else {
+                                                    await FirebaseFirestore
+                                                        .instance
+                                                        .collection("batches")
+                                                        .doc(batchDocIds[
+                                                            widget.index])
+                                                        .update({
+                                                      "userIDs": subUserList
+                                                              .sublist(
+                                                                  0, index) +
+                                                          subUserList.sublist(
+                                                            index + 1,
+                                                          ),
+                                                    });
+                                                    Fluttertoast.showToast(
+                                                        msg:
+                                                            "Deletion successful!");
 
-                                                  Navigator.pop(context, true);
+                                                    Navigator.pop(
+                                                        context, true);
+                                                  }
                                                 },
                                                 child: Container(
                                                   height: 40,

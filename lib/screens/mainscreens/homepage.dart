@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 import 'package:poultry_app/screens/mainscreens/sell.dart';
 import 'package:poultry_app/screens/mainscreens/todayrate.dart';
 import 'package:poultry_app/utils/constants.dart';
@@ -62,7 +63,14 @@ class _HomePageState extends State<HomePage> {
                       )
                     ],
                   ),
-                  CustomSearchBox(),
+                  GestureDetector(
+                    onTap: () {
+                      Fluttertoast.showToast(msg: "Coming Soon!");
+                    },
+                    child: CustomSearchBox(
+                      isEnabled: false,
+                    ),
+                  ),
                   addVerticalSpace(10),
                   Container(
                     height: 180,

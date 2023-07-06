@@ -25,7 +25,7 @@ class ExpensesPage extends StatefulWidget {
 class ExpensesPageState extends State<ExpensesPage> {
   List expenses = [];
   bool isLoading = true;
-  bool containsChicks = false; 
+  bool containsChicks = false;
 
   Future<void> getExpenses() async {
     setState(() {
@@ -43,11 +43,13 @@ class ExpensesPageState extends State<ExpensesPage> {
         .then((value) {
       if (value.exists) {
         for (int i = 0; i < value.data()!["expenseDetails"].length; i++) {
-          if(value.data()!["expenseDetails"][i]["Expenses Category"] == "Chicks"){
+          if (value.data()!["expenseDetails"][i]["Expenses Category"] ==
+              "Chicks") {
             setState(() {
-              containsChicks = true; 
+              containsChicks = true;
             });
           }
+
           setState(() {
             expenses.add({
               "Amount": double.parse(
@@ -56,6 +58,8 @@ class ExpensesPageState extends State<ExpensesPage> {
               "Description": value.data()!["expenseDetails"][i]["Description"],
               "Expenses Category": value.data()!["expenseDetails"][i]
                   ["Expenses Category"],
+              "NoOfChicksThen": value.data()!["expenseDetails"][i]
+                  ["NoOfChicksThen"],
             });
           });
         }
@@ -180,7 +184,13 @@ class ExpensesPageState extends State<ExpensesPage> {
 
   void initState() {
     super.initState();
-    getExpenses();
+    if (widget.accessLevel != 2) {
+      getExpenses();
+    } else {
+      setState(() {
+        isLoading = false;
+      });
+    }
   }
 
   @override
@@ -194,7 +204,7 @@ class ExpensesPageState extends State<ExpensesPage> {
                       builder: (context) => AddExpensesPage(
                             docId: widget.docId,
                             owner: widget.owner,
-                            containsChicks: containsChicks, 
+                            containsChicks: containsChicks,
                           ))).then((value) {
                 if (value == null) {
                   return;
@@ -226,18 +236,26 @@ class ExpensesPageState extends State<ExpensesPage> {
                     style: bodyText22w600(color: black),
                   ),
                   addVerticalSpace(20),
-                  Row(
-                    children: [
-                      Expanded(child: CustomSearchBox()),
-                      addHorizontalySpace(12),
-                      Container(
-                        decoration:
-                            shadowDecoration(6, 1, white, bcolor: normalGray),
-                        height: 40,
-                        width: 40,
-                        child: Image.asset("assets/images/filter.png"),
-                      )
-                    ],
+                  GestureDetector(
+                    onTap: () {
+                      Fluttertoast.showToast(msg: "Coming Soon!");
+                    },
+                    child: Row(
+                      children: [
+                        Expanded(
+                            child: CustomSearchBox(
+                          isEnabled: false,
+                        )),
+                        addHorizontalySpace(12),
+                        Container(
+                          decoration:
+                              shadowDecoration(6, 1, white, bcolor: normalGray),
+                          height: 40,
+                          width: 40,
+                          child: Image.asset("assets/images/filter.png"),
+                        )
+                      ],
+                    ),
                   ),
                 ],
               ),
@@ -304,33 +322,42 @@ class ExpensesPageState extends State<ExpensesPage> {
                                 msg:
                                     "Chicks and Feed Served entries cannot be edited!");
                           } else {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => AddExpensesPage(
-                                  docId: widget.docId,
-                                  owner: widget.owner,
-                                  description: expenses[index]["Description"],
-                                  amount: expenses[index]["Amount"],
-                                  date: expenses[index]["Date"],
-                                  expensesCategory: expenses[index]
-                                      ["Expenses Category"],
-                                  isEdit: true,
-                                  upto: expenses.sublist(0, index),
-                                  after: expenses.sublist(
-                                    index + 1,
+                            if (widget.accessLevel == 1) {
+                              //view
+                              Fluttertoast.showToast(
+                                  msg:
+                                      "You don't have the required permissions to edit!");
+                            } else {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => AddExpensesPage(
+                                    docId: widget.docId,
+                                    owner: widget.owner,
+                                    description: expenses[index]["Description"],
+                                    amount: expenses[index]["Amount"],
+                                    date: expenses[index]["Date"],
+                                    expensesCategory: expenses[index]
+                                        ["Expenses Category"],
+                                    noOfChicksThen: expenses[index]
+                                        ["NoOfChicksThen"],
+                                    isEdit: true,
+                                    upto: expenses.sublist(0, index),
+                                    after: expenses.sublist(
+                                      index + 1,
+                                    ),
                                   ),
                                 ),
-                              ),
-                            ).then((value) {
-                              if (value == null) {
-                                return;
-                              } else {
-                                if (value) {
-                                  getExpenses();
+                              ).then((value) {
+                                if (value == null) {
+                                  return;
+                                } else {
+                                  if (value) {
+                                    getExpenses();
+                                  }
                                 }
-                              }
-                            });
+                              });
+                            }
                           }
                         },
                         child: Container(
@@ -365,167 +392,166 @@ class ExpensesPageState extends State<ExpensesPage> {
                                 children: [
                                   Row(
                                     children: [
-                                      Image.asset("assets/images/share.png"),
-                                      addHorizontalySpace(10),
-                                      InkWell(
-                                        child: Image.asset(
-                                            "assets/images/delete.png"),
-                                        onTap: () {
-                                          if (expenses[index]
-                                                  ["Expenses Category"] ==
-                                              "Chicks") {
-                                            Fluttertoast.showToast(
-                                                msg:
-                                                    "Cannot delete entry for Chicks!");
-                                          } else {
-                                            showDialog(
-                                                context: context,
-                                                builder: (context) {
-                                                  return AlertDialog(
-                                                      contentPadding:
-                                                          const EdgeInsets.all(
-                                                              6),
-                                                      shape:
-                                                          RoundedRectangleBorder(
-                                                        borderRadius:
-                                                            BorderRadius
-                                                                .circular(10.0),
-                                                      ),
-                                                      content: Builder(
-                                                        builder: (context) {
-                                                          var height =
-                                                              MediaQuery.of(
-                                                                      context)
-                                                                  .size
-                                                                  .height;
-                                                          var width =
-                                                              MediaQuery.of(
-                                                                      context)
-                                                                  .size
-                                                                  .width;
+                                      // Image.asset("assets/images/share.png"),
+                                      // addHorizontalySpace(10),
+                                      Padding(
+                                        padding: EdgeInsets.only(
+                                          left: 40.0,
+                                        ),
+                                        child: InkWell(
+                                          child: Icon(
+                                              Icons.delete_outline_rounded),
+                                          onTap: () {
+                                            if (expenses[index]
+                                                    ["Expenses Category"] ==
+                                                "Chicks") {
+                                              Fluttertoast.showToast(
+                                                  msg:
+                                                      "Cannot delete entry for Chicks!");
+                                            } else {
+                                              showDialog(
+                                                  context: context,
+                                                  builder: (context) {
+                                                    return AlertDialog(
+                                                        contentPadding:
+                                                            const EdgeInsets
+                                                                .all(6),
+                                                        shape:
+                                                            RoundedRectangleBorder(
+                                                          borderRadius:
+                                                              BorderRadius
+                                                                  .circular(
+                                                                      10.0),
+                                                        ),
+                                                        content: Builder(
+                                                          builder: (context) {
+                                                            var height =
+                                                                MediaQuery.of(
+                                                                        context)
+                                                                    .size
+                                                                    .height;
+                                                            var width =
+                                                                MediaQuery.of(
+                                                                        context)
+                                                                    .size
+                                                                    .width;
 
-                                                          return Container(
-                                                            height:
-                                                                height * 0.15,
-                                                            padding:
-                                                                EdgeInsets.all(
-                                                              10.0,
-                                                            ),
-                                                            child: Column(
-                                                              children: [
-                                                                // SizedBox(
-                                                                //   height: 20.0,
-                                                                // ),
-                                                                Center(
-                                                                  child: Text(
-                                                                    "Do you want to delete this item?",
-                                                                    textAlign:
-                                                                        TextAlign
-                                                                            .center,
-                                                                    style:
-                                                                        bodyText16Bold(
-                                                                      color:
-                                                                          black,
+                                                            return Container(
+                                                              height:
+                                                                  height * 0.15,
+                                                              padding:
+                                                                  EdgeInsets
+                                                                      .all(
+                                                                10.0,
+                                                              ),
+                                                              child: Column(
+                                                                children: [
+                                                                  // SizedBox(
+                                                                  //   height: 20.0,
+                                                                  // ),
+                                                                  Center(
+                                                                    child: Text(
+                                                                      "Do you want to delete this item?",
+                                                                      textAlign:
+                                                                          TextAlign
+                                                                              .center,
+                                                                      style:
+                                                                          bodyText16Bold(
+                                                                        color:
+                                                                            black,
+                                                                      ),
                                                                     ),
                                                                   ),
-                                                                ),
-                                                                Spacer(),
-                                                                Row(
-                                                                  children: [
-                                                                    InkWell(
-                                                                      onTap:
-                                                                          () {
-                                                                        Navigator.pop(
-                                                                            context);
-                                                                      },
-                                                                      child:
-                                                                          Container(
-                                                                        height:
-                                                                            40,
-                                                                        width: width *
-                                                                            0.3,
-                                                                        decoration: BoxDecoration(
-                                                                            border:
-                                                                                Border.all(color: yellow),
-                                                                            borderRadius: BorderRadius.circular(6)),
+                                                                  Spacer(),
+                                                                  Row(
+                                                                    children: [
+                                                                      InkWell(
+                                                                        onTap:
+                                                                            () {
+                                                                          Navigator.pop(
+                                                                              context);
+                                                                        },
                                                                         child:
-                                                                            Center(
+                                                                            Container(
+                                                                          height:
+                                                                              40,
+                                                                          width:
+                                                                              width * 0.3,
+                                                                          decoration: BoxDecoration(
+                                                                              border: Border.all(color: yellow),
+                                                                              borderRadius: BorderRadius.circular(6)),
                                                                           child:
-                                                                              Text(
-                                                                            'Cancel',
-                                                                            style:
-                                                                                bodyText14Bold(color: black),
+                                                                              Center(
+                                                                            child:
+                                                                                Text(
+                                                                              'Cancel',
+                                                                              style: bodyText14Bold(color: black),
+                                                                            ),
                                                                           ),
                                                                         ),
                                                                       ),
-                                                                    ),
-                                                                    addHorizontalySpace(
-                                                                        20),
-                                                                    InkWell(
-                                                                      onTap:
-                                                                          () async {
-                                                                        await FirebaseFirestore
-                                                                            .instance
-                                                                            .collection("users")
-                                                                            .doc(widget.owner)
-                                                                            .collection("Batches")
-                                                                            .doc(widget.docId)
-                                                                            .collection("BatchData")
-                                                                            .doc("Expenses")
-                                                                            .set({
-                                                                          "expenseDetails": expenses.sublist(0, index) +
-                                                                              expenses.sublist(
-                                                                                index + 1,
-                                                                              ),
-                                                                        });
-                                                                        Fluttertoast.showToast(
-                                                                            msg:
-                                                                                "Deletion successful!");
+                                                                      addHorizontalySpace(
+                                                                          20),
+                                                                      InkWell(
+                                                                        onTap:
+                                                                            () async {
+                                                                          if (widget.accessLevel ==
+                                                                              1) {
+                                                                            //view
+                                                                            Fluttertoast.showToast(msg: "You don't have the required permissions to edit!");
+                                                                            Navigator.pop(context,
+                                                                                false);
+                                                                          } else {
+                                                                            await FirebaseFirestore.instance.collection("users").doc(widget.owner).collection("Batches").doc(widget.docId).collection("BatchData").doc("Expenses").set({
+                                                                              "expenseDetails": expenses.sublist(0, index) +
+                                                                                  expenses.sublist(
+                                                                                    index + 1,
+                                                                                  ),
+                                                                            });
+                                                                            Fluttertoast.showToast(msg: "Deletion successful!");
 
-                                                                        Navigator.pop(
-                                                                            context,
-                                                                            true);
-                                                                      },
-                                                                      child:
-                                                                          Container(
-                                                                        height:
-                                                                            40,
-                                                                        width: width *
-                                                                            0.3,
-                                                                        decoration: BoxDecoration(
-                                                                            color:
-                                                                                red,
-                                                                            borderRadius:
-                                                                                BorderRadius.circular(6)),
+                                                                            Navigator.pop(context,
+                                                                                true);
+                                                                          }
+                                                                        },
                                                                         child:
-                                                                            Center(
+                                                                            Container(
+                                                                          height:
+                                                                              40,
+                                                                          width:
+                                                                              width * 0.3,
+                                                                          decoration: BoxDecoration(
+                                                                              color: red,
+                                                                              borderRadius: BorderRadius.circular(6)),
                                                                           child:
-                                                                              Text(
-                                                                            'Delete',
-                                                                            style:
-                                                                                bodyText14Bold(color: Colors.white),
+                                                                              Center(
+                                                                            child:
+                                                                                Text(
+                                                                              'Delete',
+                                                                              style: bodyText14Bold(color: Colors.white),
+                                                                            ),
                                                                           ),
                                                                         ),
                                                                       ),
-                                                                    ),
-                                                                  ],
-                                                                ),
-                                                              ],
-                                                            ),
-                                                          );
-                                                        },
-                                                      ));
-                                                }).then((value) {
-                                              if (value == null) {
-                                                return;
-                                              } else {
-                                                if (value) {
-                                                  getExpenses();
+                                                                    ],
+                                                                  ),
+                                                                ],
+                                                              ),
+                                                            );
+                                                          },
+                                                        ));
+                                                  }).then((value) {
+                                                if (value == null) {
+                                                  return;
+                                                } else {
+                                                  if (value) {
+                                                    getExpenses();
+                                                  }
                                                 }
-                                              }
-                                            });
-                                          }
-                                        },
+                                              });
+                                            }
+                                          },
+                                        ),
                                       ),
                                     ],
                                   ),

@@ -13,14 +13,14 @@ class LanguagePage extends StatefulWidget {
 class _LanguagePageState extends State<LanguagePage> {
   List language = [
     {"language": "English"},
-    {"language": "Germany"},
-    {"language": "French"},
-    {"language": "Spanish"},
-    {"language": "Arabic"},
-    {"language": "Japanese"},
-    {"language": "Italian"},
-    {"language": "Korean"},
-    {"language": "Russian"},
+    // {"language": "Germany"},
+    // {"language": "French"},
+    // {"language": "Spanish"},
+    // {"language": "Arabic"},
+    // {"language": "Japanese"},
+    // {"language": "Italian"},
+    // {"language": "Korean"},
+    // {"language": "Russian"},
   ];
   int value = 0;
   @override
@@ -42,6 +42,7 @@ class _LanguagePageState extends State<LanguagePage> {
               padding: const EdgeInsets.symmetric(horizontal: 15),
               child: CustomSearchBox(
                 hint: "Search Language",
+                isEnabled: false,
               ),
             ),
             Padding(

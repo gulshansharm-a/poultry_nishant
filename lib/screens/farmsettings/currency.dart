@@ -13,14 +13,14 @@ class CurrencyPage extends StatefulWidget {
 class _CurrencyPageState extends State<CurrencyPage> {
   List currency = [
     {"currency": "INR"},
-    {"currency": "USD"},
-    {"currency": "AFN"},
-    {"currency": "DZD"},
-    {"currency": "EUR"},
-    {"currency": "AUD"},
-    {"currency": "CAD"},
-    {"currency": "EGP"},
-    {"currency": "ILS"},
+    // {"currency": "USD"},
+    // {"currency": "AFN"},
+    // {"currency": "DZD"},
+    // {"currency": "EUR"},
+    // {"currency": "AUD"},
+    // {"currency": "CAD"},
+    // {"currency": "EGP"},
+    // {"currency": "ILS"},
   ];
   int currentIndex = 0;
   @override
@@ -42,6 +42,7 @@ class _CurrencyPageState extends State<CurrencyPage> {
               padding: const EdgeInsets.symmetric(horizontal: 15),
               child: CustomSearchBox(
                 hint: "Search Currency",
+                isEnabled: false,
               ),
             ),
             Padding(

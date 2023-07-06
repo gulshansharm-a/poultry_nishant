@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 import 'package:poultry_app/screens/feed/addinventory.dart';
 import 'package:poultry_app/screens/feed/transferinventory.dart';
 import 'package:poultry_app/utils/constants.dart';
@@ -151,7 +152,14 @@ class MyInventoryWidgetState extends State<InventoryWidget> {
                 ],
               ),
               addVerticalSpace(25),
-              CustomSearchBox(),
+              GestureDetector(
+                onTap: () {
+                  Fluttertoast.showToast(msg: "Coming Soon!");
+                },
+                child: CustomSearchBox(
+                  isEnabled: false,
+                ),
+              ),
             ],
           ),
         ),
@@ -198,12 +206,13 @@ class MyInventoryWidgetState extends State<InventoryWidget> {
                           children: [
                             Row(
                               children: [
-                                Padding(
-                                  padding: const EdgeInsets.symmetric(
-                                      horizontal: 15),
-                                  child: Image.asset("assets/images/tpad.png"),
-                                ),
-                                Image.asset("assets/images/editI.png")
+                                // Padding(
+                                //   padding: const EdgeInsets.symmetric(
+                                //       horizontal: 15),
+                                //   child: Image.asset("assets/images/tpad.png"),
+                                // ),
+                                // Image.asset("assets/images/editI.png")
+                                Container(),
                               ],
                             ),
                             Text(
@@ -225,7 +234,38 @@ class MyInventoryWidgetState extends State<InventoryWidget> {
                     height: 0,
                   );
                 },
-                itemCount: inventory.length)
+                itemCount: inventory.length),
+        // addVerticalSpace(
+        //   10.0,
+        // ),
+//         Container(
+//           width: width(context) * 0.85,
+//           child: Center(
+//             child: Text(
+//               """How to use Stock Room section to keep records of feed ordered.
+
+// For Every poultry farm poultry feed is needed.
+// So farmer do following activity to stock management.
+
+// 1.Place feed order to feed company along with payment details
+// Step 1.  Click on Order>>>click plus sign>>>fill the form >>>Click on Place Order.
+
+// 2. Placed feed order, received at Poultry Farm
+// Step 2. Click on Add >>>Select Order No>>>Check order details>>>Click Feed Received .
+
+// 3.Received Feed need to be transfer to specific Batch.
+// Step 3. Click On Inventory >>> Click On Transfer>>>Select Stock Out >>> fill the Stock out form>>Click on Feed Transfer.
+
+// 4. After Batch Sold remaining stock must be transfer to stock room.
+// Step 4.Click On Inventory >>>Click On Transfer >>>Select Stock In >>>Fill the form>>Click on Transfer feed to Inventory""",
+//               style: bodyText14w500(color: darkGray),
+//               textAlign: TextAlign.left,
+//             ),
+//           ),
+//         ),
+//         addVerticalSpace(
+//           10.0,
+//         ),
       ],
     );
   }

@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 import 'package:poultry_app/screens/batches/addeggs.dart';
 import 'package:poultry_app/screens/batches/batches.dart';
 import 'package:poultry_app/utils/constants.dart';
@@ -395,36 +396,43 @@ class _EggsPageState extends State<EggsPage> {
                     itemBuilder: (context, index) {
                       return InkWell(
                         onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => AddEggsPage(
-                                batchId: batchDocIds[widget.index],
-                                owner: widget.owner,
-                                isEdit: true,
-                                batchIndex: index,
-                                description: eggDetails[index]["description"],
-                                date: eggDetails[index]["date"],
-                                pulletEggs: eggDetails[index]["pulletEggs"],
-                                brokenEggs: eggDetails[index]["broken"],
-                                totalEggs: eggDetails[index]["eggCollection"],
-                                liveChicksThen: eggDetails[index]
-                                    ["liveChicksThen"],
-                                upto: editDetails.sublist(0, index),
-                                after: editDetails.sublist(
-                                  index + 1,
+                          if (widget.accessLevel == 1) {
+                            //view
+                            Fluttertoast.showToast(
+                                msg:
+                                    "You don't have the required permissions to edit!");
+                          } else {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => AddEggsPage(
+                                  batchId: batchDocIds[widget.index],
+                                  owner: widget.owner,
+                                  isEdit: true,
+                                  batchIndex: index,
+                                  description: eggDetails[index]["description"],
+                                  date: eggDetails[index]["date"],
+                                  pulletEggs: eggDetails[index]["pulletEggs"],
+                                  brokenEggs: eggDetails[index]["broken"],
+                                  totalEggs: eggDetails[index]["eggCollection"],
+                                  liveChicksThen: eggDetails[index]
+                                      ["liveChicksThen"],
+                                  upto: editDetails.sublist(0, index),
+                                  after: editDetails.sublist(
+                                    index + 1,
+                                  ),
                                 ),
                               ),
-                            ),
-                          ).then((value) {
-                            if (value == null) {
-                              return;
-                            } else {
-                              if (value) {
-                                getEggDetails();
+                            ).then((value) {
+                              if (value == null) {
+                                return;
+                              } else {
+                                if (value) {
+                                  getEggDetails();
+                                }
                               }
-                            }
-                          });
+                            });
+                          }
                         },
                         child: Container(
                           padding: EdgeInsets.symmetric(

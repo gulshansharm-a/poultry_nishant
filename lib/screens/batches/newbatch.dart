@@ -289,15 +289,15 @@ class _NewBatchState extends State<NewBatch> {
                                 SetOptions(merge: true),
                               );
                             }
+                            Future.delayed(Duration(milliseconds: 1000), () {
+                              if (widget.isEdit == true) {
+                                Navigator.pop(context, true);
+                                Navigator.pop(context, true);
+                              } else {
+                                Navigator.pop(context, true);
+                              }
+                            });
                           }
-                          Future.delayed(Duration(milliseconds: 1000), () {
-                            if (widget.isEdit == true) {
-                              Navigator.pop(context, true);
-                              Navigator.pop(context, true);
-                            } else {
-                              Navigator.pop(context, true);
-                            }
-                          });
                         },
                         width: width(context),
                         height: 55,

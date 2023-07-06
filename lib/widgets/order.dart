@@ -147,50 +147,56 @@ class _OrderWidgetState extends State<OrderWidget> {
               padding: const EdgeInsets.symmetric(horizontal: 15),
               child: Column(
                 children: [
-                  Row(
-                    children: [
-                      Container(
-                        decoration:
-                            shadowDecoration(6, 0, white, bcolor: darkGray),
-                        width: 36,
-                        height: 30,
-                        child: Image.asset(
-                          "assets/images/filter.png",
+                  GestureDetector(
+                    onTap: () {
+                      Fluttertoast.showToast(msg: "Coming Soon!");
+                    },
+                    child: Row(
+                      children: [
+                        Container(
+                          decoration:
+                              shadowDecoration(6, 0, white, bcolor: darkGray),
+                          width: 36,
+                          height: 30,
+                          child: Image.asset(
+                            "assets/images/filter.png",
+                          ),
                         ),
-                      ),
-                      addHorizontalySpace(10),
-                      InkWell(
-                        onTap: () {
-                          showDialog(
-                              context: context,
-                              builder: (context) => showCalDialog());
-                        },
-                        child: CustomDropdown(
-                          icon: true,
+                        addHorizontalySpace(10),
+                        InkWell(
+                          onTap: () {
+                            // showDialog(
+                            //     context: context,
+                            //     builder: (context) => showCalDialog());
+                            Fluttertoast.showToast(msg: "Coming Soon!");
+                          },
+                          child: CustomDropdown(
+                            icon: true,
+                            hp: 5,
+                            radius: 6,
+                            bcolor: darkGray,
+                            width: width(context) * .35,
+                            list: [],
+                            height: 30,
+                            iconSize: 12,
+                            hint: hint,
+                            textStyle: bodyText12w600(color: darkGray),
+                          ),
+                        ),
+                        addHorizontalySpace(5),
+                        CustomDropdown(
                           hp: 5,
                           radius: 6,
                           bcolor: darkGray,
-                          width: width(context) * .35,
+                          width: width(context) * .3,
                           list: [],
                           height: 30,
                           iconSize: 12,
-                          hint: hint,
+                          hint: "Feed Type",
                           textStyle: bodyText12w600(color: darkGray),
-                        ),
-                      ),
-                      addHorizontalySpace(5),
-                      CustomDropdown(
-                        hp: 5,
-                        radius: 6,
-                        bcolor: darkGray,
-                        width: width(context) * .3,
-                        list: list,
-                        height: 30,
-                        iconSize: 12,
-                        hint: "Feed Type",
-                        textStyle: bodyText12w600(color: darkGray),
-                      )
-                    ],
+                        )
+                      ],
+                    ),
                   ),
                   addVerticalSpace(20),
                   Container(

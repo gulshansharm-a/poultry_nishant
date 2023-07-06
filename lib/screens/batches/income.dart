@@ -152,18 +152,26 @@ class _IncomePageState extends State<IncomePage> {
                     style: bodyText22w600(color: black),
                   ),
                   addVerticalSpace(20),
-                  Row(
-                    children: [
-                      Expanded(child: CustomSearchBox()),
-                      addHorizontalySpace(12),
-                      Container(
-                        decoration:
-                            shadowDecoration(6, 1, white, bcolor: normalGray),
-                        height: 40,
-                        width: 40,
-                        child: Image.asset("assets/images/filter.png"),
-                      )
-                    ],
+                  GestureDetector(
+                    onTap: () {
+                      Fluttertoast.showToast(msg: "Coming Soon!");
+                    },
+                    child: Row(
+                      children: [
+                        Expanded(
+                            child: CustomSearchBox(
+                          isEnabled: false,
+                        )),
+                        addHorizontalySpace(12),
+                        Container(
+                          decoration:
+                              shadowDecoration(6, 1, white, bcolor: normalGray),
+                          height: 40,
+                          width: 40,
+                          child: Image.asset("assets/images/filter.png"),
+                        )
+                      ],
+                    ),
                   ),
                 ],
               ),
@@ -189,56 +197,65 @@ class _IncomePageState extends State<IncomePage> {
                             child: InkWell(
                               onTap: () {
                                 print('tapped');
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (context) => AddIncomePage(
-                                      incomeCategoryList: incomeCategoryList,
-                                      index: widget.index,
-                                      owner: widget.owner,
-                                      isEdit: true,
-                                      date: DateFormat("dd/MMM/yyyy")
-                                          .format(DateFormat("dd/MM/yyyy")
-                                              .parse(
-                                                  incomeDetails[index]["date"]))
-                                          .toLowerCase(),
-                                      name: incomeDetails[index]["name"],
-                                      contact: incomeDetails[index]["Contact"],
-                                      incomeCategory: incomeDetails[index]
-                                          ["IncomeCategory"],
-                                      weight: incomeDetails[index]["Weight"],
-                                      billDue: double.parse(incomeDetails[index]
-                                              ["BillAmount"]
-                                          .toString()),
-                                      quantity: incomeDetails[index]
-                                          ["Quantity"],
-                                      paymentMethod: incomeDetails[index]
-                                          ["PaymentMethod"],
-                                      updatedPrice: incomeDetails[index]
-                                          ["CostPerBird"],
-                                      amountDue: incomeDetails[index]
-                                          ["AmountDue"],
-                                      amountPaid: incomeDetails[index]
-                                          ["AmountPaid"],
-                                      description: incomeDetails[index]
-                                          ["Description"],
-                                      rate: incomeDetails[index]["Rate"],
-                                      itemIndex: index,
-                                      upto: incomeDetails.sublist(0, index),
-                                      after: incomeDetails.sublist(
-                                        index + 1,
+                                print(widget.accessLevel);
+                                if (widget.accessLevel == 1) {
+                                  //view
+                                  Fluttertoast.showToast(
+                                      msg:
+                                          "You don't have the required permissions to edit!");
+                                } else {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) => AddIncomePage(
+                                        incomeCategoryList: incomeCategoryList,
+                                        index: widget.index,
+                                        owner: widget.owner,
+                                        isEdit: true,
+                                        date: DateFormat("dd/MMM/yyyy")
+                                            .format(DateFormat("dd/MM/yyyy")
+                                                .parse(incomeDetails[index]
+                                                    ["date"]))
+                                            .toLowerCase(),
+                                        name: incomeDetails[index]["name"],
+                                        contact: incomeDetails[index]
+                                            ["Contact"],
+                                        incomeCategory: incomeDetails[index]
+                                            ["IncomeCategory"],
+                                        weight: incomeDetails[index]["Weight"],
+                                        billDue: double.parse(
+                                            incomeDetails[index]["BillAmount"]
+                                                .toString()),
+                                        quantity: incomeDetails[index]
+                                            ["Quantity"],
+                                        paymentMethod: incomeDetails[index]
+                                            ["PaymentMethod"],
+                                        updatedPrice: incomeDetails[index]
+                                            ["CostPerBird"],
+                                        amountDue: incomeDetails[index]
+                                            ["AmountDue"],
+                                        amountPaid: incomeDetails[index]
+                                            ["AmountPaid"],
+                                        description: incomeDetails[index]
+                                            ["Description"],
+                                        rate: incomeDetails[index]["Rate"],
+                                        itemIndex: index,
+                                        upto: incomeDetails.sublist(0, index),
+                                        after: incomeDetails.sublist(
+                                          index + 1,
+                                        ),
                                       ),
                                     ),
-                                  ),
-                                ).then((value) {
-                                  if (value == null) {
-                                    return;
-                                  } else {
-                                    if (value) {
-                                      getIncomeDetails();
+                                  ).then((value) {
+                                    if (value == null) {
+                                      return;
+                                    } else {
+                                      if (value) {
+                                        getIncomeDetails();
+                                      }
                                     }
-                                  }
-                                });
+                                  });
+                                }
                               },
                               child: Row(
                                 mainAxisAlignment:
@@ -276,169 +293,139 @@ class _IncomePageState extends State<IncomePage> {
                                               "assets/images/share.png"),
                                           addHorizontalySpace(10),
                                           InkWell(
-                                            onTap: () => showDialog(
-                                                context: context,
-                                                builder: (context) {
-                                                  return AlertDialog(
-                                                      contentPadding:
-                                                          const EdgeInsets.all(
-                                                              6),
-                                                      shape:
-                                                          RoundedRectangleBorder(
-                                                        borderRadius:
-                                                            BorderRadius
-                                                                .circular(10.0),
-                                                      ),
-                                                      content: Builder(
-                                                        builder: (context) {
-                                                          var height =
-                                                              MediaQuery.of(
-                                                                      context)
-                                                                  .size
-                                                                  .height;
-                                                          var width =
-                                                              MediaQuery.of(
-                                                                      context)
-                                                                  .size
-                                                                  .width;
-
-                                                          return Container(
-                                                            height:
-                                                                height * 0.15,
-                                                            padding:
-                                                                EdgeInsets.all(
-                                                              10.0,
+                                              onTap: () => showDialog(
+                                                      context: context,
+                                                      builder: (context) {
+                                                        return AlertDialog(
+                                                            contentPadding:
+                                                                const EdgeInsets
+                                                                    .all(6),
+                                                            shape:
+                                                                RoundedRectangleBorder(
+                                                              borderRadius:
+                                                                  BorderRadius
+                                                                      .circular(
+                                                                          10.0),
                                                             ),
-                                                            child: Column(
-                                                              children: [
-                                                                // SizedBox(
-                                                                //   height: 20.0,
-                                                                // ),
-                                                                Center(
-                                                                  child: Text(
-                                                                    "Do you want to delete this item?",
-                                                                    textAlign:
-                                                                        TextAlign
-                                                                            .center,
-                                                                    style:
-                                                                        bodyText16Bold(
-                                                                      color:
-                                                                          black,
-                                                                    ),
+                                                            content: Builder(
+                                                              builder:
+                                                                  (context) {
+                                                                var height =
+                                                                    MediaQuery.of(
+                                                                            context)
+                                                                        .size
+                                                                        .height;
+                                                                var width =
+                                                                    MediaQuery.of(
+                                                                            context)
+                                                                        .size
+                                                                        .width;
+
+                                                                return Container(
+                                                                  height:
+                                                                      height *
+                                                                          0.15,
+                                                                  padding:
+                                                                      EdgeInsets
+                                                                          .all(
+                                                                    10.0,
                                                                   ),
-                                                                ),
-                                                                Spacer(),
-                                                                Row(
-                                                                  children: [
-                                                                    InkWell(
-                                                                      onTap:
-                                                                          () {
-                                                                        Navigator.pop(
-                                                                            context);
-                                                                      },
-                                                                      child:
-                                                                          Container(
-                                                                        height:
-                                                                            40,
-                                                                        width: width *
-                                                                            0.3,
-                                                                        decoration: BoxDecoration(
-                                                                            border:
-                                                                                Border.all(color: yellow),
-                                                                            borderRadius: BorderRadius.circular(6)),
+                                                                  child: Column(
+                                                                    children: [
+                                                                      // SizedBox(
+                                                                      //   height: 20.0,
+                                                                      // ),
+                                                                      Center(
                                                                         child:
-                                                                            Center(
-                                                                          child:
-                                                                              Text(
-                                                                            'Cancel',
-                                                                            style:
-                                                                                bodyText14Bold(color: black),
-                                                                          ),
-                                                                        ),
-                                                                      ),
-                                                                    ),
-                                                                    addHorizontalySpace(
-                                                                        20),
-                                                                    InkWell(
-                                                                      onTap:
-                                                                          () async {
-                                                                        await FirebaseFirestore
-                                                                            .instance
-                                                                            .collection("users")
-                                                                            .doc(widget.owner)
-                                                                            .collection("Batches")
-                                                                            .doc(batchDocIds[widget.index])
-                                                                            .collection("BatchData")
-                                                                            .doc("Income")
-                                                                            .set({
-                                                                          "incomeDetails": incomeDetails.sublist(0, index) +
-                                                                              incomeDetails.sublist(
-                                                                                index + 1,
-                                                                              ),
-                                                                        });
-
-                                                                        await FirebaseFirestore
-                                                                            .instance
-                                                                            .collection("users")
-                                                                            .doc(widget.owner)
-                                                                            .collection("Batches")
-                                                                            .doc(batchDocIds[widget.index])
-                                                                            .set({
-                                                                          "Sold":
-                                                                              FieldValue.increment(-incomeDetails[index]["Quantity"]),
-                                                                        }, SetOptions(merge: true));
-
-                                                                        Fluttertoast.showToast(
-                                                                            msg:
-                                                                                "Deletion successful!");
-
-                                                                        Navigator.pop(
-                                                                            context,
-                                                                            true);
-                                                                      },
-                                                                      child:
-                                                                          Container(
-                                                                        height:
-                                                                            40,
-                                                                        width: width *
-                                                                            0.3,
-                                                                        decoration: BoxDecoration(
+                                                                            Text(
+                                                                          "Do you want to delete this item?",
+                                                                          textAlign:
+                                                                              TextAlign.center,
+                                                                          style:
+                                                                              bodyText16Bold(
                                                                             color:
-                                                                                red,
-                                                                            borderRadius:
-                                                                                BorderRadius.circular(6)),
-                                                                        child:
-                                                                            Center(
-                                                                          child:
-                                                                              Text(
-                                                                            'Delete',
-                                                                            style:
-                                                                                bodyText14Bold(color: Colors.white),
+                                                                                black,
                                                                           ),
                                                                         ),
                                                                       ),
-                                                                    ),
-                                                                  ],
-                                                                ),
-                                                              ],
-                                                            ),
-                                                          );
-                                                        },
-                                                      ));
-                                                }).then((value) {
-                                              if (value == null) {
-                                                return;
-                                              } else {
-                                                if (value) {
-                                                  getIncomeDetails();
-                                                }
-                                              }
-                                            }),
-                                            child: ImageIcon(
-                                              AssetImage(
-                                                  "assets/images/delete.png"),
-                                            ),
-                                          ),
+                                                                      Spacer(),
+                                                                      Row(
+                                                                        children: [
+                                                                          InkWell(
+                                                                            onTap:
+                                                                                () {
+                                                                              Navigator.pop(context);
+                                                                            },
+                                                                            child:
+                                                                                Container(
+                                                                              height: 40,
+                                                                              width: width * 0.3,
+                                                                              decoration: BoxDecoration(border: Border.all(color: yellow), borderRadius: BorderRadius.circular(6)),
+                                                                              child: Center(
+                                                                                child: Text(
+                                                                                  'Cancel',
+                                                                                  style: bodyText14Bold(color: black),
+                                                                                ),
+                                                                              ),
+                                                                            ),
+                                                                          ),
+                                                                          addHorizontalySpace(
+                                                                              20),
+                                                                          InkWell(
+                                                                            onTap:
+                                                                                () async {
+                                                                              if (widget.accessLevel == 1) {
+                                                                                //view
+                                                                                Fluttertoast.showToast(msg: "You don't have the required permissions to edit!");
+                                                                                Navigator.pop(context, false);
+                                                                              } else {
+                                                                                await FirebaseFirestore.instance.collection("users").doc(widget.owner).collection("Batches").doc(batchDocIds[widget.index]).collection("BatchData").doc("Income").set({
+                                                                                  "incomeDetails": incomeDetails.sublist(0, index) +
+                                                                                      incomeDetails.sublist(
+                                                                                        index + 1,
+                                                                                      ),
+                                                                                });
+
+                                                                                await FirebaseFirestore.instance.collection("users").doc(widget.owner).collection("Batches").doc(batchDocIds[widget.index]).set({
+                                                                                  "Sold": FieldValue.increment(-incomeDetails[index]["Quantity"]),
+                                                                                }, SetOptions(merge: true));
+
+                                                                                Fluttertoast.showToast(msg: "Deletion successful!");
+
+                                                                                Navigator.pop(context, true);
+                                                                              }
+                                                                            },
+                                                                            child:
+                                                                                Container(
+                                                                              height: 40,
+                                                                              width: width * 0.3,
+                                                                              decoration: BoxDecoration(color: red, borderRadius: BorderRadius.circular(6)),
+                                                                              child: Center(
+                                                                                child: Text(
+                                                                                  'Delete',
+                                                                                  style: bodyText14Bold(color: Colors.white),
+                                                                                ),
+                                                                              ),
+                                                                            ),
+                                                                          ),
+                                                                        ],
+                                                                      ),
+                                                                    ],
+                                                                  ),
+                                                                );
+                                                              },
+                                                            ));
+                                                      }).then((value) {
+                                                    if (value == null) {
+                                                      return;
+                                                    } else {
+                                                      if (value) {
+                                                        getIncomeDetails();
+                                                      }
+                                                    }
+                                                  }),
+                                              child: Icon(Icons
+                                                  .delete_outline_rounded)),
                                           //Image.asset("assets/images/delete.png"),
                                         ],
                                       ),

@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 import 'package:poultry_app/screens/batches/addvaccination.dart';
 import 'package:poultry_app/screens/farmsettings/userinfo.dart';
 import 'package:poultry_app/utils/constants.dart';
@@ -35,7 +36,7 @@ class _VaccinationPageState extends State<VaccinationPage> {
     setState(() {
       isLoading = true;
       vaccinationDetails.clear();
-      editDetails.clear(); 
+      editDetails.clear();
     });
     await FirebaseFirestore.instance
         .collection('users')
@@ -395,36 +396,43 @@ class _VaccinationPageState extends State<VaccinationPage> {
                       itemBuilder: (context, index) {
                         return InkWell(
                           onTap: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => AddVaccinationPage(
-                                  docId: widget.batchId,
-                                  owner: widget.owner,
-                                  isEdit: true,
-                                  description: vaccinationDetails[index]
-                                      ["description"],
-                                  batchIndex: index,
-                                  date: vaccinationDetails[index]["date"],
-                                  type: vaccinationDetails[index]
-                                      ["vaccineType"],
-                                  method: vaccinationDetails[index]["method"],
-                                  name: vaccinationDetails[index]["name"],
-                                  upto: editDetails.sublist(0, index),
-                                  after: editDetails.sublist(
-                                    index + 1,
+                            if (widget.accessLevel == 1) {
+                              //view
+                              Fluttertoast.showToast(
+                                  msg:
+                                      "You don't have the required permissions to edit!");
+                            } else {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => AddVaccinationPage(
+                                    docId: widget.batchId,
+                                    owner: widget.owner,
+                                    isEdit: true,
+                                    description: vaccinationDetails[index]
+                                        ["description"],
+                                    batchIndex: index,
+                                    date: vaccinationDetails[index]["date"],
+                                    type: vaccinationDetails[index]
+                                        ["vaccineType"],
+                                    method: vaccinationDetails[index]["method"],
+                                    name: vaccinationDetails[index]["name"],
+                                    upto: editDetails.sublist(0, index),
+                                    after: editDetails.sublist(
+                                      index + 1,
+                                    ),
                                   ),
                                 ),
-                              ),
-                            ).then((value) {
-                              if (value == null) {
-                                return;
-                              } else {
-                                if (value) {
-                                  getBatchData();
+                              ).then((value) {
+                                if (value == null) {
+                                  return;
+                                } else {
+                                  if (value) {
+                                    getBatchData();
+                                  }
                                 }
-                              }
-                            });
+                              });
+                            }
                           },
                           child: Container(
                             padding: EdgeInsets.symmetric(

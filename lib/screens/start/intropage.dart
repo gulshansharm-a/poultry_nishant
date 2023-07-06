@@ -33,9 +33,15 @@ class _IntroPageState extends State<IntroPage> {
               children: const [
                 PageViewItemWidget(
                   assetUrl: 'assets/images/intro1.png',
+                  title: "Poultry Hub App",
+                  subtitle:
+                      "provides the poultry farmer to records day to day poultry activity in app, through which farmer can analyze and takes best decision to maximize poultry business profit.",
                 ),
                 PageViewItemWidget(
                   assetUrl: 'assets/images/intro2.png',
+                  title: "Poultry Hub App",
+                  subtitle:
+                      "provides platform to Poultry Farmer, Trader, and Reatiler to connect with each other to grow business.",
                 ),
                 LogIn()
               ],
@@ -82,10 +88,14 @@ class _IntroPageState extends State<IntroPage> {
 
 class PageViewItemWidget extends StatelessWidget {
   final String assetUrl;
+  final String title;
+  final String subtitle;
 
   const PageViewItemWidget({
     Key? key,
     required this.assetUrl,
+    required this.title,
+    required this.subtitle,
   }) : super(key: key);
 
   @override
@@ -95,7 +105,7 @@ class PageViewItemWidget extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Container(
-            height: height(context) * 0.6,
+            height: height(context) * 0.5,
             width: width(context),
             decoration: BoxDecoration(
                 image: DecorationImage(
@@ -103,11 +113,11 @@ class PageViewItemWidget extends StatelessWidget {
                 assetUrl,
               ),
               fit: BoxFit.fill,
-            ))), 
+            ))),
         Padding(
           padding: const EdgeInsets.all(20),
           child: Container(
-            height: 90,
+            height: 165,
             child: Stack(
               children: [
                 Align(
@@ -122,13 +132,16 @@ class PageViewItemWidget extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      "Lorem Ipsum",
-                      style: bodyText24w400(color: black),
+                      title,
+                      style: bodyText24w600(color: black),
                     ),
                     addVerticalSpace(6),
-                    Text(
-                      "is Simply dummy text",
-                      style: bodyText24w600(color: black),
+                    Container(
+                      width: width(context) * 0.7,
+                      child: Text(
+                        subtitle,
+                        style: bodyText15w500(color: black),
+                      ),
                     ),
                   ],
                 )

@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 import 'package:poultry_app/screens/batches/addbodyweight.dart';
 import 'package:poultry_app/screens/batches/batches.dart';
 import 'package:poultry_app/utils/constants.dart';
@@ -280,7 +281,7 @@ class _BodyWeightPageState extends State<BodyWeightPage> {
                               .data()!["weightDetails"][i]["liveChicksThen"]
                               .toString()))
                       .toString())
-                  .toStringAsFixed(3),
+                  .toStringAsFixed(1),
               "liveChicksThen": int.parse(value
                   .data()!["weightDetails"][i]["liveChicksThen"]
                   .toString()),
@@ -487,35 +488,42 @@ class _BodyWeightPageState extends State<BodyWeightPage> {
                   itemBuilder: (context, index) {
                     return InkWell(
                       onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => AddBodyWeight(
-                              batchId: widget.batchId,
-                              owner: widget.owner,
-                              bodyWeight: double.parse(weightDetails[index]
-                                      ["bodyWeight"]
-                                  .toString()),
-                              date: weightDetails[index]["date"],
-                              liveChicksThen: weightDetails[index]
-                                  ["liveChicksThen"],
-                              isEdit: true,
-                              batchIndex: index,
-                              upto: editDetails.sublist(0, index),
-                              after: editDetails.sublist(
-                                index + 1,
+                        if (widget.accessLevel == 1) {
+                          //view
+                          Fluttertoast.showToast(
+                              msg:
+                                  "You don't have the required permissions to edit!");
+                        } else {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => AddBodyWeight(
+                                batchId: widget.batchId,
+                                owner: widget.owner,
+                                bodyWeight: double.parse(weightDetails[index]
+                                        ["bodyWeight"]
+                                    .toString()),
+                                date: weightDetails[index]["date"],
+                                liveChicksThen: weightDetails[index]
+                                    ["liveChicksThen"],
+                                isEdit: true,
+                                batchIndex: index,
+                                upto: editDetails.sublist(0, index),
+                                after: editDetails.sublist(
+                                  index + 1,
+                                ),
                               ),
                             ),
-                          ),
-                        ).then((value) {
-                          if (value == null) {
-                            return;
-                          } else {
-                            if (value) {
-                              getWeightDetails();
+                          ).then((value) {
+                            if (value == null) {
+                              return;
+                            } else {
+                              if (value) {
+                                getWeightDetails();
+                              }
                             }
-                          }
-                        });
+                          });
+                        }
                       },
                       child: Container(
                         padding:

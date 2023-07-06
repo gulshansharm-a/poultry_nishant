@@ -149,12 +149,114 @@ class _AddIncomePageState extends State<AddIncomePage> {
     });
   }
 
+  // Future<void> getFinancialAnalysis() async {
+  //   int netBirds = 0;
+  //   double originalPrice = 0.0;
+  //   double totalFeedPrice = 0.0;
+  //   int mortality = 0;
+  //   double expensesDiluted = 0.0;
+  //   // Map feedData = {};
+
+  //   await FirebaseFirestore.instance
+  //       .collection("users")
+  //       .doc(widget.owner)
+  //       .collection("Batches")
+  //       .doc(batchDocIds[widget.index])
+  //       .collection("BatchData")
+  //       .doc("Feed Served")
+  //       .get()
+  //       .then((value) {
+  //     if (value.exists) {
+  //       for (int i = 0; i < value.data()!["feedServed"].length; i++) {
+  //         // if (feedData.containsKey(value.data()!["feedServed"][i]["date"])) {
+  //         //   setState(() {
+  //         //     feedData[value.data()!["feedServed"][i]["date"]] += (double.parse(
+  //         //             value.data()!["feedServed"][i]["feedPrice"].toString()) *
+  //         //         int.parse(value
+  //         //             .data()!["feedServed"][i]["feedQuantity"]
+  //         //             .toString()));
+  //         //   });
+  //         // } else {
+  //         //   setState(() {
+  //         //     feedData[value.data()!["feedServed"][i]["date"]] = (double.parse(
+  //         //             value.data()!["feedServed"][i]["feedPrice"].toString()) *
+  //         //         int.parse(value
+  //         //             .data()!["feedServed"][i]["feedQuantity"]
+  //         //             .toString()));
+  //         //   });
+  //         // }
+
+  //         setState(() {
+  //           totalFeedPrice += double.parse(
+  //               value.data()!["feedServed"][i]["priceForFeed"].toString());
+  //         });
+  //       }
+  //     }
+  //   });
+
+  //   await FirebaseFirestore.instance
+  //       .collection("users")
+  //       .doc(widget.owner)
+  //       .collection("Batches")
+  //       .doc(batchDocIds[widget.index])
+  //       .collection("BatchData")
+  //       .doc("Expenses")
+  //       .get()
+  //       .then((value) {
+  //     if (value.exists) {
+  //       for (int i = 0; i < value.data()!["expenseDetails"].length; i++) {
+  //         setState(() {
+  //           if (value.data()!["expenseDetails"][i]["Expenses Category"] !=
+  //                   "Chicks" &&
+  //               value.data()!["expenseDetails"][i]["Expenses Category"] !=
+  //                   "Feed Served") {
+  //             expensesDiluted += double.parse(
+  //                 value.data()!["expenseDetails"][i]["Amount"].toString());
+  //           }
+  //         });
+  //       }
+  //     }
+  //   });
+
+  //   await FirebaseFirestore.instance
+  //       .collection("users")
+  //       .doc(widget.owner)
+  //       .collection("Batches")
+  //       .doc(batchDocIds[widget.index])
+  //       .get()
+  //       .then((value) {
+  //     setState(() {
+  //       mortality = int.parse(value.data()!["Mortality"].toString());
+  //     });
+  //     int noBirds = int.parse(value.data()!["NoOfBirds"].toString());
+
+  //     setState(() {
+  //       netBirds = noBirds - mortality;
+  //       String costBird = value.data()!["CostPerBird"] ?? "";
+  //       if (costBird == "") {
+  //         originalPrice = 0;
+  //       } else {
+  //         originalPrice = double.parse(value.data()!["CostPerBird"].toString());
+  //       }
+  //     });
+  //   });
+  //   setState(() {
+  //     updatedPrice =
+  //         originalPrice + ((totalFeedPrice + expensesDiluted) / netBirds);
+  //     updatedPrice += (updatedPrice * mortality) / netBirds;
+  //     if (netBirds == 0) {
+  //       updatedPrice = originalPrice;
+  //     }
+  //   });
+  //   print(updatedPrice);
+  // }
+
   Future<void> getFinancialAnalysis() async {
     int netBirds = 0;
     double originalPrice = 0.0;
     double totalFeedPrice = 0.0;
-    int mortality = 0;
     double expensesDiluted = 0.0;
+    int mortality = 0;
     // Map feedData = {};
 
     await FirebaseFirestore.instance
@@ -188,7 +290,10 @@ class _AddIncomePageState extends State<AddIncomePage> {
 
           setState(() {
             totalFeedPrice += double.parse(
-                value.data()!["feedServed"][i]["priceForFeed"].toString());
+                    value.data()!["feedServed"][i]["priceForFeed"].toString()) /
+                double.parse(value
+                    .data()!["feedServed"][i]["liveChicksThen"]
+                    .toString());
           });
         }
       }
@@ -211,7 +316,10 @@ class _AddIncomePageState extends State<AddIncomePage> {
                 value.data()!["expenseDetails"][i]["Expenses Category"] !=
                     "Feed Served") {
               expensesDiluted += double.parse(
-                  value.data()!["expenseDetails"][i]["Amount"].toString());
+                      value.data()!["expenseDetails"][i]["Amount"].toString()) /
+                  double.parse(value
+                      .data()!["expenseDetails"][i]["NoOfChicksThen"]
+                      .toString());
             }
           });
         }
@@ -228,6 +336,7 @@ class _AddIncomePageState extends State<AddIncomePage> {
       setState(() {
         mortality = int.parse(value.data()!["Mortality"].toString());
       });
+      int sold = int.parse(value.data()!["Sold"].toString());
       int noBirds = int.parse(value.data()!["NoOfBirds"].toString());
 
       setState(() {
@@ -240,15 +349,49 @@ class _AddIncomePageState extends State<AddIncomePage> {
         }
       });
     });
+    print("Total Feed Price: ${totalFeedPrice}");
+    print("Expenses diluted: ${expensesDiluted}");
+    print(expensesDiluted + totalFeedPrice);
     setState(() {
-      updatedPrice = originalPrice + (totalFeedPrice / netBirds);
-      updatedPrice += (updatedPrice * mortality) / netBirds;
-      updatedPrice += (expensesDiluted) / netBirds;
-      if (netBirds == 0) {
-        updatedPrice = originalPrice;
-      }
+      updatedPrice = originalPrice + ((expensesDiluted + totalFeedPrice));
     });
     print(updatedPrice);
+    if (mortality > 0) {
+      await FirebaseFirestore.instance
+          .collection("users")
+          .doc(widget.owner)
+          .collection("Batches")
+          .doc(batchDocIds[widget.index])
+          .collection("BatchData")
+          .doc("Mortality")
+          .get()
+          .then((value) {
+        for (int i = 0; i < value.data()!["mortalityDetails"].length; i++) {
+          setState(() {
+            updatedPrice += (double.parse(value
+                        .data()!["mortalityDetails"][i]["costUptoHere"]
+                        .toString()) *
+                    int.parse(value
+                        .data()!["mortalityDetails"][i]["Mortality"]
+                        .toString())) /
+                (int.parse(value
+                    .data()!["mortalityDetails"][i]["liveChicksNow"]
+                    .toString()));
+          });
+        }
+      });
+    }
+    if (netBirds == 0) {
+      setState(() {
+        updatedPrice = originalPrice;
+      });
+    }
+    print(updatedPrice);
+
+    // for(var keys in incomeMap.keys.toList()){
+    //   double cp = 0;
+
+    // }
   }
 
   Future<void> getBatchType() async {
@@ -1059,6 +1202,8 @@ class _AddIncomePageState extends State<AddIncomePage> {
     setState(() {
       incomeDate = DateTime.utc(year, month, day);
     });
+
+    print(updatedPrice);
 
     await FirebaseFirestore.instance
         .collection("users")

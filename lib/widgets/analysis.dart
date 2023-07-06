@@ -208,7 +208,10 @@ class _AnalysisWidgetState extends State<AnalysisWidget> {
 
           setState(() {
             totalFeedPrice += double.parse(
-                value.data()!["feedServed"][i]["priceForFeed"].toString());
+                    value.data()!["feedServed"][i]["priceForFeed"].toString()) /
+                double.parse(value
+                    .data()!["feedServed"][i]["liveChicksThen"]
+                    .toString());
           });
         }
       }
@@ -231,7 +234,10 @@ class _AnalysisWidgetState extends State<AnalysisWidget> {
                 value.data()!["expenseDetails"][i]["Expenses Category"] !=
                     "Feed Served") {
               expensesDiluted += double.parse(
-                  value.data()!["expenseDetails"][i]["Amount"].toString());
+                      value.data()!["expenseDetails"][i]["Amount"].toString()) /
+                  double.parse(value
+                      .data()!["expenseDetails"][i]["NoOfChicksThen"]
+                      .toString());
             }
           });
         }
@@ -262,11 +268,36 @@ class _AnalysisWidgetState extends State<AnalysisWidget> {
         analysis[1]["c2data1"] = "${sold}";
       });
     });
-    double updatedPrice = originalPrice + (totalFeedPrice / netBirds);
-    setState(() {
-      updatedPrice += (updatedPrice * mortality) / netBirds;
-      updatedPrice += (expensesDiluted) / netBirds;
-    });
+    print("Total Feed Price: ${totalFeedPrice}");
+    print("Expenses diluted: ${expensesDiluted}");
+    print(expensesDiluted + totalFeedPrice);
+    double updatedPrice = originalPrice + ((expensesDiluted + totalFeedPrice));
+    print(updatedPrice);
+    if (mortality > 0) {
+      await FirebaseFirestore.instance
+          .collection("users")
+          .doc(widget.owner)
+          .collection("Batches")
+          .doc(widget.batchId)
+          .collection("BatchData")
+          .doc("Mortality")
+          .get()
+          .then((value) {
+        for (int i = 0; i < value.data()!["mortalityDetails"].length; i++) {
+          setState(() {
+            updatedPrice += (double.parse(value
+                        .data()!["mortalityDetails"][i]["costUptoHere"]
+                        .toString()) *
+                    int.parse(value
+                        .data()!["mortalityDetails"][i]["Mortality"]
+                        .toString())) /
+                (int.parse(value
+                    .data()!["mortalityDetails"][i]["liveChicksNow"]
+                    .toString()));
+          });
+        }
+      });
+    }
     if (netBirds == 0) {
       setState(() {
         updatedPrice = originalPrice;

@@ -125,6 +125,7 @@ class _AddVaccinationPageState extends State<AddVaccinationPage> {
 
   List vaccineMode = ['Live', 'Killed'];
   List vaccineType = [
+    'MAREK\'S',
     'Newcastle Disease( ND) B1',
     'Newcastle Disease( ND) LaSota',
     'Newcastle Disease( ND) R2B',
@@ -132,6 +133,7 @@ class _AddVaccinationPageState extends State<AddVaccinationPage> {
     'Avian Infectious Bronchitis',
     'Infectious Bursal Disease (Gaumboro I+)',
     'Massachusetts Type H-120 Strain',
+    'CORYZA',
   ];
   List vaccineMethod = ['Eye Drop', 'Drinking Water', 'SC', 'IM'];
   @override

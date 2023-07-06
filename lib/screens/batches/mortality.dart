@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 import 'package:poultry_app/screens/batches/addmortality.dart';
 import 'package:poultry_app/screens/batches/batches.dart';
 import 'package:poultry_app/utils/constants.dart';
@@ -36,7 +37,7 @@ class _MortalityPageState extends State<MortalityPage> {
   ];
 
   List mortalityInformation = [];
-  List editDetails = [];
+
   int totalMortality = 0;
   double mortalityPercent = 0;
   bool isLoading = true;
@@ -47,7 +48,7 @@ class _MortalityPageState extends State<MortalityPage> {
     setState(() {
       isLoading = true;
       mortalityInformation.clear();
-      editDetails.clear();
+
       totalMortality = 0;
     });
     await FirebaseFirestore.instance
@@ -173,13 +174,12 @@ class _MortalityPageState extends State<MortalityPage> {
               "birds": value.data()!["mortalityDetails"][i]["Mortality"],
               "description": value.data()!["mortalityDetails"][i]
                   ["Description"],
-            });
-
-            editDetails.add({
-              "Date": value.data()!["mortalityDetails"][i]["Date"],
-              "Mortality": value.data()!["mortalityDetails"][i]["Mortality"],
-              "Description": value.data()!["mortalityDetails"][i]
-                  ["Description"],
+              "costThen": double.parse(value
+                  .data()!["mortalityDetails"][i]["costUptoHere"]
+                  .toString()),
+              "liveChicksNow": int.parse(value
+                  .data()!["mortalityDetails"][i]["liveChicksNow"]
+                  .toString()),
             });
           });
         }
@@ -190,113 +190,8 @@ class _MortalityPageState extends State<MortalityPage> {
           mortalityInformation.sort((first, second) =>
               (inputFormat.parse(first["date"]))
                   .compareTo((inputFormat.parse(second["date"]))));
-
-          editDetails.sort((first, second) {
-            String date1 = first["Date"];
-            String date2 = second["Date"];
-            DateTime dateTime1 = DateTime.now(), dateTime2 = DateTime.now();
-
-            List date = date1.toString().split("/");
-            int month = 0;
-            int day = int.parse(date[0]);
-            switch (date[1]) {
-              case "jan":
-                month = 1;
-                break;
-              case "feb":
-                month = 2;
-                break;
-              case "mar":
-                month = 3;
-                break;
-              case "apr":
-                month = 4;
-                break;
-              case "may":
-                month = 5;
-                break;
-              case "jun":
-                month = 6;
-                break;
-              case "jul":
-                month = 7;
-                break;
-              case "aug":
-                month = 8;
-                break;
-              case "sep":
-                month = 9;
-                break;
-              case "oct":
-                month = 10;
-                break;
-              case "nov":
-                month = 11;
-                break;
-              case "dec":
-                month = 12;
-                break;
-            }
-            int year = int.parse(date[2]);
-
-            setState(() {
-              dateTime1 = inputFormat
-                  .parse(inputFormat.format(DateTime.utc(year, month, day)));
-            });
-
-            date = date2.toString().split("/");
-            month = 0;
-            day = int.parse(date[0]);
-            switch (date[1]) {
-              case "jan":
-                month = 1;
-                break;
-              case "feb":
-                month = 2;
-                break;
-              case "mar":
-                month = 3;
-                break;
-              case "apr":
-                month = 4;
-                break;
-              case "may":
-                month = 5;
-                break;
-              case "jun":
-                month = 6;
-                break;
-              case "jul":
-                month = 7;
-                break;
-              case "aug":
-                month = 8;
-                break;
-              case "sep":
-                month = 9;
-                break;
-              case "oct":
-                month = 10;
-                break;
-              case "nov":
-                month = 11;
-                break;
-              case "dec":
-                month = 12;
-                break;
-            }
-            year = int.parse(date[2]);
-
-            setState(() {
-              dateTime2 = inputFormat
-                  .parse(inputFormat.format(DateTime.utc(year, month, day)));
-            });
-
-            return (dateTime1).compareTo(dateTime2);
-          });
         });
         print(mortalityInformation);
-        print(editDetails);
       }
     });
 
@@ -404,65 +299,33 @@ class _MortalityPageState extends State<MortalityPage> {
                       shrinkWrap: true,
                       physics: NeverScrollableScrollPhysics(),
                       itemBuilder: (context, index) {
-                        return InkWell(
-                          onTap: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => AddMortalityPage(
-                                  docId: batchDocIds[widget.index],
-                                  description: mortalityInformation[index]
-                                      ["description"],
-                                  date: mortalityInformation[index]["date"],
-                                  mortality: mortalityInformation[index]
-                                      ["birds"],
-                                  owner: widget.owner,
-                                  batchIndex: index,
-                                  isEdit: true,
-                                  upto: editDetails.sublist(0, index),
-                                  after: editDetails.sublist(
-                                    index + 1,
-                                  ),
-                                ),
+                        return Container(
+                          padding: EdgeInsets.symmetric(
+                              horizontal: 15, vertical: 12),
+                          height: 70,
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(
+                                "${mortalityInformation[index]["date"]}",
+                                style: bodyText12normal(color: darkGray),
                               ),
-                            ).then((value) {
-                              if (value == null) {
-                                return;
-                              } else {
-                                if (value) {
-                                  getMortalityInformation();
-                                }
-                              }
-                            });
-                          },
-                          child: Container(
-                            padding: EdgeInsets.symmetric(
-                                horizontal: 15, vertical: 12),
-                            height: 70,
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Text(
-                                  "${mortalityInformation[index]["date"]}",
-                                  style: bodyText12normal(color: darkGray),
-                                ),
-                                Row(
-                                  mainAxisAlignment:
-                                      MainAxisAlignment.spaceBetween,
-                                  children: [
-                                    Text(
-                                      "Day ${mortalityInformation[index]["day"]}",
-                                      style: bodyText17w500(color: black),
-                                    ),
-                                    Text(
-                                      "Birds: ${mortalityInformation[index]["birds"]}",
-                                      style: bodyText14normal(color: darkGray),
-                                    )
-                                  ],
-                                )
-                              ],
-                            ),
+                              Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Text(
+                                    "Day ${mortalityInformation[index]["day"]}",
+                                    style: bodyText17w500(color: black),
+                                  ),
+                                  Text(
+                                    "Birds: ${mortalityInformation[index]["birds"]}",
+                                    style: bodyText14normal(color: darkGray),
+                                  )
+                                ],
+                              )
+                            ],
                           ),
                         );
                       },
