@@ -397,9 +397,8 @@ class _AnalysisWidgetState extends State<AnalysisWidget> {
 
       perBirdIntake = (feedToday * 1000) / netBirds;
 
-      analysis[3]["c1data1"] = netBirds == 0
-          ? "0 gms"
-          : "${((feedIntakePerBird).toStringAsFixed(2))} gms";
+      analysis[3]["c1data1"] =
+          netBirds == 0 ? "0 gms" : "${((feedIntakePerBird).ceil())} gms";
     });
     setState(() {
       loadStatus += 1;

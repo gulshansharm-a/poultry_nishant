@@ -71,7 +71,7 @@ class _LanguagePageState extends State<LanguagePage> {
                                 value == index;
                               });
                             },
-                            leading: Image.asset("assets/images/flag.png"),
+                            // leading: Image.asset("assets/images/flag.png"),
                             title: Text(
                               language[index]['language'],
                               style: bodyText16w500(color: black),

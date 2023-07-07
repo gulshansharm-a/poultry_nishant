@@ -281,7 +281,7 @@ class _BodyWeightPageState extends State<BodyWeightPage> {
                               .data()!["weightDetails"][i]["liveChicksThen"]
                               .toString()))
                       .toString())
-                  .toStringAsFixed(1),
+                  .toStringAsFixed(2),
               "liveChicksThen": int.parse(value
                   .data()!["weightDetails"][i]["liveChicksThen"]
                   .toString()),
